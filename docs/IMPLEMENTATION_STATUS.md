@@ -43,3 +43,7 @@ Added packaged PyFunc ranking model with fitted TF-IDF artifact, transformer wei
 ## Phase 10 — recommendations
 
 Added protected /api/jobs/recommended before dynamic job routing, profile-required validation, score filtering and bounded results, all explanation fields and production-registry inference with explicit local fallback. UI can select production or any experiment algorithm. Twenty backend tests passed including recommendation validation and registry failure. Local ranking examines at most the 1000 most recently seen active jobs; retrieval scaling is a documented MVP limit.
+
+## Phase 11 — application tracker
+
+Added protected idempotent save/unsave and application creation/list/update, all six statuses, owner checks and append-only timestamp/notes history. Repeating unchanged updates does not create history. Corrected concurrent candidate creation and restricted PostgreSQL row locks to applications. Twenty-two backend tests passed at this phase, including repeated save/status requests and cross-candidate privacy.

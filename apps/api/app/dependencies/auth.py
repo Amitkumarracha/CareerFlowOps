@@ -2,6 +2,7 @@ import secrets
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from apps.api.app.config import get_settings
@@ -14,7 +15,9 @@ bearer = HTTPBearer(auto_error=False)
 def require_token(expected: str, credentials: HTTPAuthorizationCredentials | None) -> None:
     if not expected:
         raise HTTPException(503, "Access token is not configured")
-    if credentials is None or not secrets.compare_digest(credentials.credentials, expected):
+    if credentials is None or not secrets.compare_digest(
+        credentials.credentials.encode(), expected.encode()
+    ):
         raise HTTPException(
             401, "Valid bearer token required", headers={"WWW-Authenticate": "Bearer"}
         )
@@ -31,6 +34,11 @@ def candidate(
     require_token(get_settings().candidate_api_token, credentials)
     # Single-candidate MVP: identity is server-owned, never supplied through a header.
     if db.get(Candidate, "local-candidate") is None:
-        db.add(Candidate(id="local-candidate"))
-        db.commit()
+        try:
+            with db.begin_nested():
+                db.add(Candidate(id="local-candidate"))
+                db.flush()
+            db.commit()
+        except IntegrityError:
+            pass
     return "local-candidate"

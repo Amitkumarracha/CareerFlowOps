@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from apps.api.app.config import get_settings
 from apps.api.app.db import get_db
 from apps.api.app.routes.admin import router as admin_router
+from apps.api.app.routes.applications import router as application_router
 from apps.api.app.routes.jobs import router as jobs_router
 from apps.api.app.routes.profile import router as profile_router
 from apps.api.app.routes.recommendations import router as recommendation_router
@@ -42,3 +43,5 @@ app.include_router(recommendation_router)
 app.include_router(jobs_router)
 
 app.include_router(profile_router)
+
+app.include_router(application_router)
