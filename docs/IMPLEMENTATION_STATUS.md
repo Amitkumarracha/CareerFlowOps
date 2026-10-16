@@ -47,3 +47,7 @@ Added protected /api/jobs/recommended before dynamic job routing, profile-requir
 ## Phase 11 — application tracker
 
 Added protected idempotent save/unsave and application creation/list/update, all six statuses, owner checks and append-only timestamp/notes history. Repeating unchanged updates does not create history. Corrected concurrent candidate creation and restricted PostgreSQL row locks to applications. Twenty-two backend tests passed at this phase, including repeated save/status requests and cross-candidate privacy.
+
+## Phase 12 — TPO analytics
+
+Added protected aggregate TPO endpoint with real student/job/application counts, company/category/skill-gap distributions, current-status funnel and potential candidate matching counts. No names, emails or resume text are returned. Match breakdown is explicitly bounded to 100 jobs/500 active profiles. Added saved-artifact MLOps dashboard API. Aggregate privacy and zero-data tests passed.
