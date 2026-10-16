@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     mlflow_model_name: str = "careerflowops-ranker"
     mlflow_model_alias: str = "production"
     sentence_transformer_model: str = "sentence-transformers/all-MiniLM-L6-v2"
-    ranking_algorithm: str = "tfidf"
+    ranking_algorithm: str = "hybrid"
     use_model_registry: bool = False
     prometheus_enabled: bool = True
     log_level: str = "INFO"

@@ -285,12 +285,12 @@ export function ResumePage() {
 }
 export function RecommendedPage() {
   const [minScore, setMinScore] = useState("0");
-  const [algorithm, setAlgorithm] = useState("hybrid");
+  const [algorithm, setAlgorithm] = useState("production");
   const result = useQuery({
     queryKey: ["recommended", minScore, algorithm],
     queryFn: () =>
       api<Match[]>(
-        `/api/jobs/recommended?min_score=${minScore}&algorithm=${algorithm}`,
+        `/api/jobs/recommended?min_score=${minScore}${algorithm === "production" ? "" : `&algorithm=${algorithm}`}`,
       ),
   });
   return (
@@ -324,7 +324,8 @@ export function RecommendedPage() {
             value={algorithm}
             onChange={(e) => setAlgorithm(e.target.value)}
           >
-            <option value="hybrid">Hybrid, explained</option>
+            <option value="production">Production model</option>
+              <option value="hybrid">Hybrid, explained</option>
             <option value="tfidf">TF-IDF baseline</option>
             <option value="sentence_transformer">SentenceTransformer</option>
           </select>
