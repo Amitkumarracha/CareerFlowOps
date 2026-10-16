@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -16,26 +16,60 @@ import {
   KeyRound,
   Menu,
   X,
+  Bookmark,
+  Network,
 } from "lucide-react";
 const links = [
   { label: "Overview", to: "/", Icon: LayoutDashboard },
   { label: "Discover jobs", to: "/jobs", Icon: BriefcaseBusiness },
   { label: "For you", to: "/recommended", Icon: Sparkles },
+  { label: "Saved jobs", to: "/saved", Icon: Bookmark },
   { label: "Profile", to: "/profile", Icon: UserRound },
   { label: "Resume", to: "/resume", Icon: FileText },
   { label: "Applications", to: "/applications", Icon: Columns3 },
   { label: "Placement analytics", to: "/tpo", Icon: ChartNoAxesCombined },
   { label: "Model experiments", to: "/mlops", Icon: FlaskConical },
   { label: "Source health", to: "/admin", Icon: Activity },
+  { label: "System & guide", to: "/system", Icon: Network },
 ];
 export function Layout() {
   const [access, setAccess] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [accessVersion, setAccessVersion] = useState(0);
+  const location = useLocation();
+  const currentPage =
+    links.find(({ to }) =>
+      to === "/" ? location.pathname === "/" : location.pathname.startsWith(to),
+    )?.label ?? "Opportunity details";
+  useEffect(() => {
+    document.title = `${currentPage} · CareerFlowOps`;
+  }, [currentPage]);
   const cache = useQueryClient();
   return (
-    <div className="app-shell">
-      <aside className={`sidebar ${mobile ? "open" : ""}`}>
+    <div
+      className="app-shell"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          setMobile(false);
+          setAccess(false);
+        }
+      }}
+    >
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+      {mobile && (
+        <button
+          className="nav-backdrop"
+          aria-label="Close navigation"
+          onClick={() => setMobile(false)}
+        />
+      )}
+      <aside
+        id="workspace-navigation"
+        className={`sidebar ${mobile ? "open" : ""}`}
+      >
         <Link to="/" className="brand">
           <span className="brand-mark">
             <Layers size={23} />
@@ -49,7 +83,7 @@ export function Layout() {
         <nav aria-label="Main navigation">
           {links.map(({ label, to, Icon }, index) => (
             <div key={to}>
-              {index === 6 && (
+              {index === 7 && (
                 <p className="nav-label nav-second">INTELLIGENCE</p>
               )}
               <NavLink
@@ -83,15 +117,19 @@ export function Layout() {
           <button
             className="icon-button mobile-menu"
             aria-label="Toggle navigation"
+            aria-expanded={mobile}
+            aria-controls="workspace-navigation"
             onClick={() => setMobile(!mobile)}
           >
             {mobile ? <X size={21} /> : <Menu size={21} />}
           </button>
           <span className="breadcrumb">
-            Your workspace <span>/</span> <strong>CareerFlowOps</strong>
+            Your workspace <span>/</span> <strong>{currentPage}</strong>
           </span>
           <button
             className="access-button"
+            aria-expanded={access}
+            aria-controls="workspace-access"
             onClick={() => {
               setAccess(!access);
               setSaved(false);
@@ -103,17 +141,20 @@ export function Layout() {
         </header>
         {access && (
           <form
+            id="workspace-access"
             className="access-panel"
-            onSubmit={(event) => {
+            onSubmit={async (event) => {
               event.preventDefault();
               const data = new FormData(event.currentTarget);
+              await cache.cancelQueries();
+              cache.clear();
               for (const role of ["candidate", "admin"]) {
                 const value = String(data.get(role) ?? "").trim();
                 if (value)
                   sessionStorage.setItem(`careerflowops-${role}`, value);
                 else sessionStorage.removeItem(`careerflowops-${role}`);
               }
-              void cache.invalidateQueries();
+              setAccessVersion((value) => value + 1);
               setSaved(true);
             }}
           >
@@ -147,15 +188,29 @@ export function Layout() {
               </label>
             </div>
             <button className="button">Save access</button>
+            <button
+              className="button secondary"
+              type="button"
+              onClick={async () => {
+                await cache.cancelQueries();
+                sessionStorage.removeItem("careerflowops-candidate");
+                sessionStorage.removeItem("careerflowops-admin");
+                cache.clear();
+                setAccessVersion((value) => value + 1);
+                setAccess(false);
+              }}
+            >
+              Disconnect this tab
+            </button>
             {saved && (
               <span role="status" className="success">
-                Access updated
+                Access saved. Open a protected page to verify it.
               </span>
             )}
           </form>
         )}
-        <main>
-          <Outlet />
+        <main id="main-content" tabIndex={-1}>
+          <Outlet key={accessVersion} />
         </main>
         <footer className="footer">
           CareerFlowOps{" "}

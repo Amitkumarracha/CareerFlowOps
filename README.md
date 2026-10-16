@@ -44,7 +44,7 @@ Search by keyword, location, company, source, work arrangement, employment type,
 
 Upload a selectable-text PDF (at most 5 MB / 30 pages), review the extracted profile and open **For you**. Recommendations explain component scores, matching/missing skills, experience checks and uncertainty. Ranking choices are the registered production model, TF-IDF, SentenceTransformer and hybrid. A fallback is always identified in the response/UI. Scores are content comparisons, not probabilities of being hired.
 
-Save a job to start tracking it. **Apply** opens the official employer URL; it never submits an application or claims submission. Update `SAVED`, `APPLIED`, `INTERVIEW`, `OFFER`, `REJECTED` or `WITHDRAWN` manually; notes and timestamp history persist. Delete stored candidate data from the profile page.
+Save a job to add it to **Saved jobs** and start tracking it. Bookmarks persist across pages; removing one keeps application history. **Apply** opens the official employer URL; it never submits an application or claims submission. Update `SAVED`, `APPLIED`, `INTERVIEW`, `OFFER`, `REJECTED` or `WITHDRAWN` manually; notes and timestamp history persist. Delete stored candidate data from the profile page.
 
 ## Reproduce the ML workflow
 
@@ -55,9 +55,9 @@ make ml-setup
 make reproduce
 ```
 
-DVC runs `ingest -> preprocess -> build_training_set -> train -> evaluate -> register`, then pushes versioned outputs to ignored local `dvc-storage`. Small real source snapshots and illustrative labels remain in Git so a fresh checkout can reproduce. The first run downloads the pinned public all-MiniLM-L6-v2 revision; subsequent runs can use cached weights. `params.yaml` controls weights, seed and embedding revision. Updating a model deliberately means updating its revision there.
+DVC runs `ingest -> preprocess -> build_training_set -> train -> evaluate -> register -> export_model`, then pushes versioned outputs to ignored local `dvc-storage`. Small real source snapshots and illustrative labels remain in Git so a fresh checkout can reproduce. The first run downloads the pinned public all-MiniLM-L6-v2 revision; subsequent runs can use cached weights. `params.yaml` controls weights, seed and embedding revision. Updating a model deliberately means updating its revision there.
 
-Training creates a TF-IDF retrieval index and uses a pretrained SentenceTransformer, without supervised fine-tuning. Three MLflow experiments record actual metrics, latency, dataset hash, Git commit and seed. Validation selects the algorithm; test queries stay held out. Registration packages scoring code, fitted vocabulary, transformer weights and pinned dependencies, promotes `careerflowops-ranker@production`, and verifies prediction. Restart the API after promotion to reload its cached alias.
+Training creates a TF-IDF retrieval index and uses a pretrained SentenceTransformer, without supervised fine-tuning. Three MLflow experiments record actual metrics, latency, dataset hash, Git commit and seed. Validation selects the algorithm; test queries stay held out. Registration packages scoring code, fitted vocabulary, transformer weights and pinned dependencies, promotes `careerflowops-ranker@production`, and verifies prediction. Restart the API after promotion to reload its cached alias. The final export stage creates a checksummed production bundle for DVC delivery. Setting `MODEL_BUNDLE_PATH` makes the API require that bundle, verify its inference compatibility and pass a prediction probe before readiness; this mode never falls back to a different model. The AWS production Compose overlay configures this mode.
 
 The demonstration benchmark has **29 frozen real jobs and six fictional candidate queries**. Relevance judgments were authored by the implementation agent and are **not human-validated**. These tiny illustrative measurements do not establish general model quality. The MLOps dashboard shows saved evaluation artifacts only; it shows no numbers until evaluation runs. Its frozen corpus is independent of live job ingestion.
 
@@ -84,6 +84,8 @@ cd apps/web && npm run dev
 ```
 
 Python tests use isolated SQLite databases and fixture HTTP responses; CI also runs PostgreSQL migrations. Frontend tests cover search/error states, official Apply URLs, access errors and authenticated Save. See [verification evidence](docs/IMPLEMENTATION_STATUS.md) for checks actually run. GitHub workflow execution and AWS deployment require a real remote/account and are not implied by local checks.
+
+See the [completed UI and demonstration guide](docs/UI_FEATURE_GUIDE.md) for all pages, workflows and commands. **System & guide** shows the model/deployment lifecycle and live readiness. Resume history supports reviewing and deleting stored extractions; Applications supports status/search filters; Model experiments supports split filtering and downloading saved evaluation JSON.
 
 ## Deployment and limits
 

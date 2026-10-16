@@ -227,3 +227,58 @@ stages:
       hash: md5
       md5: 4e71018d6c558364d1a410635caa4d85
       size: 280
+  export_model:
+    cmd: python -m pipelines.export_model
+    deps:
+    - path: ml/artifacts/evaluation.json
+      hash: md5
+      md5: 8f3d0f29e410b150ca39d26cc8f2a8d5
+      size: 5133
+    - path: ml/artifacts/model.json
+      hash: md5
+      md5: a3e89ec049df2976ada8fffa3785b261
+      size: 198
+    - path: ml/artifacts/registry.json
+      hash: md5
+      md5: 4e71018d6c558364d1a410635caa4d85
+      size: 280
+    - path: ml/artifacts/sentence-transformer
+      hash: md5
+      md5: dafaaef3be7669137d713c49ba048b61.dir
+      size: 91588736
+      nfiles: 9
+    - path: ml/artifacts/tfidf.joblib
+      hash: md5
+      md5: 549356867eb77cc62217c87dbe70bd2d
+      size: 240726
+    - path: ml/artifacts/training.json
+      hash: md5
+      md5: 87777c2195baa513a192991e2e485d3c
+      size: 858
+    - path: ml/features/skills.py
+      hash: md5
+      md5: 82e96d3088d7218e2f341f9e485571d6
+      size: 1700
+    - path: ml/inference
+      hash: md5
+      md5: 5c3702bae9f9d08ff4f805949e246b59.dir
+      size: 34493
+      nfiles: 6
+    - path: pipelines/common.py
+      hash: md5
+      md5: 62e41e4bf0dcd68a085852d156ad4266
+      size: 762
+    - path: pipelines/export_model.py
+      hash: md5
+      md5: 46b543e892ff7d1a9a811b844d9a5ad0
+      size: 2599
+    - path: requirements-runtime.lock
+      hash: md5
+      md5: 0bc95e215309cccc93b2988ad162a279
+      size: 8448
+    outs:
+    - path: ml/artifacts/production
+      hash: md5
+      md5: ff6e5887b845efc9a8dcf0af4eea2015.dir
+      size: 247992
+      nfiles: 6

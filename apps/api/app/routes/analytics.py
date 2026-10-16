@@ -8,11 +8,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from apps.api.app.config import get_settings
 from apps.api.app.db import get_db
 from apps.api.app.dependencies.auth import admin
 from apps.api.app.models.entities import Application, Candidate, CandidateProfile, Company, Job
 from apps.api.app.schemas.analytics import AnalyticsOut, MlopsOut
 from apps.api.app.schemas.applications import Status
+from ml.inference.bundle import load_bundle
 from ml.inference.ranker import eligibility
 
 router = APIRouter(prefix="/api", tags=["analytics"], dependencies=[Depends(admin)])
@@ -135,11 +137,22 @@ def tpo(db: Session = Depends(get_db)) -> dict:
 @router.get("/mlops", response_model=MlopsOut)
 def mlops() -> dict:
     try:
+        bundle_path = get_settings().model_bundle_path
+        if bundle_path is not None:
+            bundle = load_bundle(str(bundle_path))
+            return {
+                "evaluation": bundle.metadata["evaluation.json"],
+                "registry": bundle.metadata["registry.json"],
+                "status_message": (
+                    f"Verified DVC release {bundle.bundle_id[:12]}. "
+                    "Restart after replacing a release."
+                ),
+            }
         evaluation_path = Path("ml/artifacts/evaluation.json")
         registry_path = Path("ml/artifacts/registry.json")
         evaluation = json.loads(evaluation_path.read_text()) if evaluation_path.exists() else None
         registry = json.loads(registry_path.read_text()) if registry_path.exists() else None
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         raise HTTPException(
             503, "Saved ML artifacts are unreadable; rerun the documented pipeline."
         ) from exc

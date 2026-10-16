@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
@@ -16,6 +16,7 @@ import { JobCard } from "../components/JobCard";
 import { PageTitle, Notice, Metric } from "../components/ui";
 import type { Job, JobList } from "../types";
 import { date } from "../utils/format";
+import { SaveButton } from "../components/SaveButton";
 export function Overview() {
   const jobs = useQuery({
     queryKey: ["jobs", "overview"],
@@ -133,8 +134,18 @@ export function Overview() {
   );
 }
 export function JobsPage() {
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const [offset, setOffset] = useState(0);
+  const [params, setParams] = useSearchParams();
+  const filters = Object.fromEntries(params);
+  const rawOffset = Number(params.get("offset") ?? 0);
+  const offset =
+    Number.isSafeInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
+  function setOffset(value: number) {
+    setParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.set("offset", String(value));
+      return next;
+    });
+  }
   const [advanced, setAdvanced] = useState(false);
   const query = new URLSearchParams({
     ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)),
@@ -143,11 +154,19 @@ export function JobsPage() {
   });
   const jobs = useQuery({
     queryKey: ["jobs", query.toString()],
-    queryFn: () => api<JobList>(`/api/jobs?${query}`),
+    queryFn: ({ signal }) => api<JobList>(`/api/jobs?${query}`, { signal }),
   });
   function filter(name: string, value: string) {
-    setFilters({ ...filters, [name]: value });
-    setOffset(0);
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        if (value) next.set(name, value);
+        else next.delete(name);
+        next.delete("offset");
+        return next;
+      },
+      { replace: true },
+    );
   }
   return (
     <>
@@ -177,13 +196,15 @@ export function JobsPage() {
         </label>
         <button
           className="button secondary"
+          aria-expanded={advanced}
+          aria-controls="job-filters"
           onClick={() => setAdvanced(!advanced)}
         >
           <SlidersHorizontal size={16} /> Filters
         </button>
       </div>
       {advanced && (
-        <div className="filter-panel">
+        <div className="filter-panel" id="job-filters">
           <label>
             Source
             <select
@@ -251,8 +272,7 @@ export function JobsPage() {
           <button
             className="text-link"
             onClick={() => {
-              setFilters({});
-              setOffset(0);
+              setParams({});
             }}
           >
             Clear filters
@@ -269,6 +289,7 @@ export function JobsPage() {
         pending={jobs.isPending}
         error={jobs.error}
         empty={jobs.data?.total === 0}
+        retry={() => void jobs.refetch()}
       />
       <div className="job-grid">
         {jobs.data?.items.map((job) => (
@@ -317,6 +338,10 @@ export function JobDetail() {
       <Notice pending={result.isPending} error={result.error} />
       {result.data && (
         <>
+          <div className="detail-actions">
+            <SaveButton jobId={result.data.id} title={result.data.title} />
+            <span>Save to your shortlist</span>
+          </div>
           <PageTitle
             eyebrow={result.data.company.toUpperCase()}
             title={result.data.title}
@@ -355,6 +380,9 @@ export function JobDetail() {
               <p className="muted">
                 First seen: {date(result.data.first_seen_at)}
               </p>
+              <p className="muted">
+                Last seen: {date(result.data.last_seen_at)}
+              </p>
               {result.data.sources.map((s) => (
                 <div
                   className="source-detail"
@@ -369,6 +397,7 @@ export function JobDetail() {
                       : "Official API"}
                   </span>
                   <p className="muted">Last seen {date(s.last_seen_at)}</p>
+                  <p className="muted">Verified {date(s.verified_at)}</p>
                   <a
                     href={s.source_url}
                     target="_blank"

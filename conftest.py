@@ -34,6 +34,7 @@ def client(db: Session, monkeypatch, tmp_path) -> Generator[TestClient, None, No
     monkeypatch.setattr(settings, "candidate_api_token", "test-candidate-token")
     monkeypatch.setattr(settings, "admin_api_token", "test-admin-token")
     monkeypatch.setattr(settings, "data_dir", tmp_path)
+    monkeypatch.setattr(settings, "model_bundle_path", None)
     app.dependency_overrides[get_db] = lambda: db
     with TestClient(app) as instance:
         yield instance

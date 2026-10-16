@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { RefreshCw, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
@@ -61,7 +62,11 @@ export function TpoPage() {
         title="Placement intelligence"
         description="Aggregate opportunity and application insights, with candidate privacy built in."
       />
-      <Notice pending={result.isPending} error={result.error} />
+      <Notice
+        pending={result.isPending}
+        error={result.error}
+        retry={() => void result.refetch()}
+      />
       {data && (
         <>
           <div className="metrics">
@@ -169,6 +174,7 @@ interface Mlops {
   status_message: string;
 }
 export function MlopsPage() {
+  const [split, setSplit] = useState("all");
   const result = useQuery({
     queryKey: ["mlops"],
     queryFn: () => api<Mlops>("/api/mlops", {}, "admin"),
@@ -180,7 +186,11 @@ export function MlopsPage() {
         title="Model experiments"
         description="Saved evaluation results, dataset versions and the model selected for inference."
       />
-      <Notice pending={result.isPending} error={result.error} />
+      <Notice
+        pending={result.isPending}
+        error={result.error}
+        retry={() => void result.refetch()}
+      />
       {result.data && (
         <>
           <div className="notice">{result.data.status_message}</div>
@@ -204,6 +214,37 @@ export function MlopsPage() {
                 Dataset: {result.data.evaluation.dataset_version} · selected:{" "}
                 {result.data.evaluation.selected_algorithm}
               </p>
+              <div className="operation-toolbar">
+                <label>
+                  Evaluation split{" "}
+                  <select
+                    value={split}
+                    onChange={(e) => setSplit(e.target.value)}
+                  >
+                    <option value="all">All splits</option>
+                    <option value="validation">Validation (selection)</option>
+                    <option value="test">Test (held out)</option>
+                  </select>
+                </label>
+                <button
+                  className="button secondary"
+                  onClick={() => {
+                    const url = URL.createObjectURL(
+                      new Blob(
+                        [JSON.stringify(result.data?.evaluation, null, 2)],
+                        { type: "application/json" },
+                      ),
+                    );
+                    const anchor = document.createElement("a");
+                    anchor.href = url;
+                    anchor.download = "careerflowops-evaluation.json";
+                    anchor.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                  }}
+                >
+                  Download evaluation
+                </button>
+              </div>
               <div className="table-wrap">
                 <table>
                   <thead>
@@ -217,27 +258,37 @@ export function MlopsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {result.data.evaluation.results.map((row) => (
-                      <tr key={`${row.algorithm}-${row.split}`}>
-                        <td>
-                          {row.algorithm}
-                          <small>{row.split}</small>
-                        </td>
-                        {[
-                          "precision_at_5",
-                          "recall_at_5",
-                          "ndcg_at_5",
-                          "mrr",
-                          "inference_latency_ms",
-                        ].map((metric) => (
-                          <td key={metric}>
-                            {row.metrics[metric]?.toFixed(
-                              metric === "inference_latency_ms" ? 1 : 3,
-                            ) ?? "—"}
+                    {result.data.evaluation.results
+                      .filter((row) => split === "all" || row.split === split)
+                      .map((row) => (
+                        <tr
+                          className={
+                            row.algorithm ===
+                            result.data?.evaluation?.selected_algorithm
+                              ? "selected-row"
+                              : ""
+                          }
+                          key={`${row.algorithm}-${row.split}`}
+                        >
+                          <td>
+                            {row.algorithm}
+                            <small>{row.split}</small>
                           </td>
-                        ))}
-                      </tr>
-                    ))}
+                          {[
+                            "precision_at_5",
+                            "recall_at_5",
+                            "ndcg_at_5",
+                            "mrr",
+                            "inference_latency_ms",
+                          ].map((metric) => (
+                            <td key={metric}>
+                              {row.metrics[metric]?.toFixed(
+                                metric === "inference_latency_ms" ? 1 : 3,
+                              ) ?? "—"}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -273,6 +324,7 @@ export function AdminPage() {
     queryKey: ["ingestion"],
     queryFn: () =>
       api<IngestionRun[]>("/api/admin/ingestion/status", {}, "admin"),
+    refetchInterval: 30000,
   });
   const dedup = useQuery({
     queryKey: ["dedup"],
@@ -323,10 +375,17 @@ export function AdminPage() {
         </button>
       </div>
       <Notice error={run.error} />
+      {run.data && (
+        <p role="status" className="notice">
+          Latest refresh: {run.data.status} · {run.data.counts.normalized ?? 0}{" "}
+          postings normalized. Review any source errors below.
+        </p>
+      )}
       <Notice
         pending={result.isPending}
         error={result.error}
         empty={result.data?.length === 0}
+        retry={() => void result.refetch()}
       >
         No runs yet. Refresh live sources or load snapshots.
       </Notice>
@@ -365,7 +424,11 @@ export function AdminPage() {
       </div>
       <section className="panel">
         <h2>Deduplication & provenance</h2>
-        <Notice error={dedup.error} />
+        <Notice
+          pending={dedup.isPending}
+          error={dedup.error}
+          retry={() => void dedup.refetch()}
+        />
         {dedup.data && (
           <>
             <p className="muted">{dedup.data.scope}</p>
@@ -373,6 +436,31 @@ export function AdminPage() {
               {dedup.data.possible_duplicates.length} possible fuzzy pairs for
               manual review.
             </p>
+            {dedup.data.possible_duplicates.length > 0 && (
+              <details>
+                <summary>Review possible duplicate pairs</summary>
+                <ul className="history">
+                  {dedup.data.possible_duplicates.map((pair) => (
+                    <li key={`${pair.left_id}-${pair.right_id}`}>
+                      <Link className="text-link" to={`/jobs/${pair.left_id}`}>
+                        {dedup.data?.jobs.find((job) => job.id === pair.left_id)
+                          ?.title ?? pair.left_id}
+                      </Link>
+                      {" ↔ "}
+                      <Link className="text-link" to={`/jobs/${pair.right_id}`}>
+                        {dedup.data?.jobs.find(
+                          (job) => job.id === pair.right_id,
+                        )?.title ?? pair.right_id}
+                      </Link>
+                      <p>
+                        Title similarity: {(pair.similarity * 100).toFixed(1)}%
+                        · requires manual review
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
             <div className="table-wrap">
               <table>
                 <thead>

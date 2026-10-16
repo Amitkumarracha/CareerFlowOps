@@ -32,6 +32,11 @@ def test_upload_extract_review_and_delete(client, db) -> None:
     assert "BSc" in body["extracted_profile"]["education"]
     assert client.get("/api/resumes/" + body["id"]).status_code == 401
     assert client.get("/api/resumes/" + body["id"], headers=AUTH).status_code == 200
+    assert client.get("/api/resumes").status_code == 401
+    summaries = client.get("/api/resumes", headers=AUTH).json()
+    assert summaries == [
+        {"id": body["id"], "filename": "resume.pdf", "created_at": body["created_at"]}
+    ]
     profile = client.get("/api/profile", headers=AUTH).json()
     profile["skills"] = ["Python", "PostgreSQL"]
     assert client.put("/api/profile", headers=AUTH, json=profile).json()["skills"] == [
@@ -84,6 +89,20 @@ def test_candidate_cannot_read_another_resume(client, db) -> None:
     db.add(resume)
     db.commit()
     assert client.get("/api/resumes/" + resume.id, headers=AUTH).status_code == 404
+    assert client.get("/api/resumes", headers=AUTH).json() == []
+    assert client.delete("/api/resumes/" + resume.id, headers=AUTH).status_code == 404
+
+
+def test_delete_extraction_preserves_edited_profile(client) -> None:
+    body = client.post(
+        "/api/resumes",
+        files={"file": ("resume.pdf", pdf("Skills\nPython software engineer"))},
+        headers=AUTH,
+    ).json()
+    client.put("/api/profile", headers=AUTH, json={"summary": "My edited summary"})
+    assert client.delete("/api/resumes/" + body["id"], headers=AUTH).status_code == 204
+    assert client.get("/api/resumes", headers=AUTH).json() == []
+    assert client.get("/api/profile", headers=AUTH).json()["summary"] == "My edited summary"
 
 
 def test_encrypted_and_excessive_page_pdfs_are_rejected(client) -> None:

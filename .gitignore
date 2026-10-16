@@ -24,5 +24,6 @@ mlruns/
 mlartifacts/
 
 mlflow-data/
+.aws-policies/
 
 *.db-*

@@ -14,6 +14,7 @@ from apps.api.app.observability import INFERENCE_LATENCY, MODEL, RECOMMENDATIONS
 from apps.api.app.schemas.profile import ProfileData
 from apps.api.app.schemas.recommendations import MatchOut
 from apps.api.app.services.jobs import serialize_job
+from ml.inference.bundle import load_bundle
 from ml.inference.ranker import rank_jobs
 from ml.registry.client import predict_registered
 
@@ -53,7 +54,15 @@ def recommended(
     settings = get_settings()
     start = perf_counter()
     registry_fallback: str | None = None
-    if settings.use_model_registry and algorithm is None:
+    if settings.model_bundle_path is not None:
+        try:
+            bundle = load_bundle(str(settings.model_bundle_path))
+            if algorithm is not None and algorithm != bundle.config["algorithm"]:
+                raise HTTPException(422, "Production serves only the selected release algorithm")
+            predictions = bundle.predict(profile_data, job_data)
+        except RuntimeError as exc:
+            raise HTTPException(503, "Production model unavailable") from exc
+    elif settings.use_model_registry and algorithm is None:
         try:
             predictions = predict_registered(
                 settings.mlflow_tracking_uri,

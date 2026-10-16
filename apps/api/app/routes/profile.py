@@ -16,7 +16,7 @@ from apps.api.app.models.entities import (
     Resume,
     SavedJob,
 )
-from apps.api.app.schemas.profile import ProfileData, ResumeOut
+from apps.api.app.schemas.profile import ProfileData, ResumeOut, ResumeSummary
 from apps.api.app.services.resumes import extract_pdf, store_profile
 
 router = APIRouter(prefix="/api", tags=["candidate"])
@@ -64,6 +64,20 @@ async def upload_resume(
     db.commit()
     db.refresh(resume)
     return resume
+
+
+@router.get("/resumes", response_model=list[ResumeSummary])
+def list_resumes(
+    candidate_id: str = Depends(candidate), db: Session = Depends(get_db)
+) -> list[Resume]:
+    return list(
+        db.scalars(
+            select(Resume)
+            .where(Resume.candidate_id == candidate_id)
+            .order_by(Resume.created_at.desc(), Resume.id)
+            .limit(100)
+        )
+    )
 
 
 @router.get("/resumes/{resume_id}", response_model=ResumeOut)

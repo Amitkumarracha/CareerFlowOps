@@ -76,3 +76,23 @@ export interface IngestionRun {
   counts: { fetched?: number; normalized?: number; duplicates?: number };
   errors: string[];
 }
+export interface SavedJob {
+  id: string;
+  job: Job;
+  created_at: string;
+}
+export interface ResumeSummary {
+  id: string;
+  filename: string;
+  created_at: string;
+}
+export interface ResumeResult extends ResumeSummary {
+  extracted_text: string;
+  extracted_profile: Profile;
+}
+export interface Readiness {
+  status: string;
+  model_version: string | null;
+  algorithm: string | null;
+  bundle_id: string | null;
+}

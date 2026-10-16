@@ -14,6 +14,7 @@ from apps.api.app.routes.jobs import router as jobs_router
 from apps.api.app.routes.profile import router as profile_router
 from apps.api.app.routes.recommendations import router as recommendation_router
 from apps.api.app.schemas.health import Health
+from ml.inference.bundle import load_bundle
 
 settings = get_settings()
 app = FastAPI(title="CareerFlowOps", version="0.1.0")
@@ -36,6 +37,17 @@ def ready(db: Session = Depends(get_db)) -> Health:
         db.execute(text("SELECT 1"))
     except SQLAlchemyError as exc:
         raise HTTPException(503, "Database unavailable") from exc
+    if settings.model_bundle_path is not None:
+        try:
+            bundle = load_bundle(str(settings.model_bundle_path))
+        except RuntimeError as exc:
+            raise HTTPException(503, "Production model unavailable") from exc
+        return Health(
+            status="ready",
+            model_version=bundle.config["model_version"],
+            algorithm=bundle.config["algorithm"],
+            bundle_id=bundle.bundle_id,
+        )
     return Health(status="ready")
 
 

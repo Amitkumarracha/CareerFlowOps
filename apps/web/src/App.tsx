@@ -4,6 +4,8 @@ import { Overview, JobsPage, JobDetail } from "./pages/Jobs";
 import { ProfilePage, ResumePage, RecommendedPage } from "./pages/Candidate";
 import { ApplicationsPage } from "./pages/Applications";
 import { TpoPage, MlopsPage, AdminPage } from "./pages/Operations";
+import { SavedPage } from "./pages/Saved";
+import { SystemPage } from "./pages/System";
 export function App() {
   return (
     <BrowserRouter>
@@ -13,6 +15,8 @@ export function App() {
           <Route path="jobs" element={<JobsPage />} />
           <Route path="jobs/:id" element={<JobDetail />} />
           <Route path="recommended" element={<RecommendedPage />} />
+          <Route path="saved" element={<SavedPage />} />
+          <Route path="system" element={<SystemPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="resume" element={<ResumePage />} />
           <Route path="applications" element={<ApplicationsPage />} />

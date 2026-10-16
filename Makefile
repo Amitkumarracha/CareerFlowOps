@@ -1,7 +1,7 @@
 PYTHON := .venv/bin/python
 UV := .venv-tools/bin/uv
 DOCKER ?= docker
-.PHONY: setup ml-setup dev test lint format db-migrate ingest train evaluate reproduce monitoring
+.PHONY: setup ml-setup cloud-setup export-model dev test lint format db-migrate ingest train evaluate reproduce monitoring
 setup:
 	python infra/scripts/configure.py
 	python -m venv .venv-tools
@@ -12,6 +12,13 @@ setup:
 
 ml-setup:
 	$(UV) pip sync --python .venv/bin/python --extra-index-url https://download.pytorch.org/whl/cpu requirements-ml.lock
+
+cloud-setup:
+	test -x .venv-deploy/bin/python || $(UV) venv --python 3.12 .venv-deploy
+	$(UV) pip sync --python .venv-deploy/bin/python requirements-deploy.lock
+
+export-model:
+	$(PYTHON) -m pipelines.export_model
 
 monitoring:
 	$(DOCKER) compose --profile monitoring up -d

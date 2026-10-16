@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { api } from "../api/client";
@@ -23,6 +24,7 @@ function ApplicationCard({ item }: { item: Application }) {
       }),
     onSuccess: () => {
       void cache.invalidateQueries({ queryKey: ["applications"] });
+      void cache.invalidateQueries({ queryKey: ["tpo"] });
     },
   });
   return (
@@ -40,6 +42,7 @@ function ApplicationCard({ item }: { item: Application }) {
         </span>
       </div>
       <form
+        aria-label={`Update ${item.job.title}`}
         onSubmit={(event) => {
           event.preventDefault();
           const values = new FormData(event.currentTarget);
@@ -100,10 +103,19 @@ function ApplicationCard({ item }: { item: Application }) {
   );
 }
 export function ApplicationsPage() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const result = useQuery({
     queryKey: ["applications"],
     queryFn: () => api<Application[]>("/api/applications"),
   });
+  const items = result.data?.filter(
+    (item) =>
+      (!statusFilter || item.status === statusFilter) &&
+      `${item.job.title} ${item.job.company}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+  );
   return (
     <>
       <PageTitle
@@ -113,23 +125,59 @@ export function ApplicationsPage() {
       />
       <div className="funnel">
         {statuses.map((status) => (
-          <div key={status}>
+          <button
+            key={status}
+            className={statusFilter === status ? "selected" : ""}
+            aria-pressed={statusFilter === status}
+            onClick={() =>
+              setStatusFilter(statusFilter === status ? "" : status)
+            }
+          >
             <strong>
               {result.data?.filter((a) => a.status === status).length ?? "—"}
             </strong>
             <span>{status}</span>
-          </div>
+          </button>
         ))}
+      </div>
+      <div className="filter-panel compact">
+        <label>
+          Search applications
+          <input
+            value={search}
+            placeholder="Job title or company"
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
+        <label>
+          Application status
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All statuses</option>
+            {statuses.map((status) => (
+              <option key={status}>{status}</option>
+            ))}
+          </select>
+        </label>
       </div>
       <Notice
         pending={result.isPending}
         error={result.error}
-        empty={result.data?.length === 0}
+        empty={items?.length === 0}
+        retry={() => void result.refetch()}
       >
-        Save a job from Discover to begin your application journey.
+        {result.data?.length ? (
+          "No applications match these filters."
+        ) : (
+          <Link className="text-link" to="/jobs">
+            Save a job from Discover to begin your application journey.
+          </Link>
+        )}
       </Notice>
       <div className="application-list">
-        {result.data?.map((item) => (
+        {items?.map((item) => (
           <ApplicationCard key={`${item.id}-${item.updated_at}`} item={item} />
         ))}
       </div>

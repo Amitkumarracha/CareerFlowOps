@@ -26,11 +26,13 @@ export function Notice({
   pending,
   empty,
   children,
+  retry,
 }: {
   error?: Error | null;
   pending?: boolean;
   empty?: boolean;
   children?: ReactNode;
+  retry?: () => void;
 }) {
   if (pending)
     return (
@@ -42,7 +44,12 @@ export function Notice({
   if (error)
     return (
       <div className="notice error" role="alert">
-        {error.message}
+        <p>{error.message}</p>
+        {retry && (
+          <button className="button secondary" onClick={retry}>
+            Try again
+          </button>
+        )}
       </div>
     );
   if (empty)

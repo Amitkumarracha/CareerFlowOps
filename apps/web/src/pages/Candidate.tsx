@@ -5,8 +5,14 @@ import { Upload, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 import { api } from "../api/client";
 import { PageTitle, Notice } from "../components/ui";
 import { JobCard } from "../components/JobCard";
-import type { Match, Profile } from "../types";
-import { percent } from "../utils/format";
+import type {
+  Match,
+  Profile,
+  Readiness,
+  ResumeResult,
+  ResumeSummary,
+} from "../types";
+import { date, percent } from "../utils/format";
 const emptyProfile: Profile = {
   name: null,
   email: null,
@@ -20,7 +26,13 @@ const emptyProfile: Profile = {
   projects: "",
   certifications: "",
 };
-function ProfileForm({ profile }: { profile: Profile }) {
+function ProfileForm({
+  profile,
+  onSaved,
+}: {
+  profile: Profile;
+  onSaved: () => void;
+}) {
   const cache = useQueryClient();
   const save = useMutation({
     mutationFn: (body: Profile) =>
@@ -28,9 +40,10 @@ function ProfileForm({ profile }: { profile: Profile }) {
         method: "PUT",
         body: JSON.stringify(body),
       }),
-    onSuccess: () => {
-      void cache.invalidateQueries({ queryKey: ["profile"] });
+    onSuccess: (updated) => {
+      cache.setQueryData(["profile"], updated);
       void cache.invalidateQueries({ queryKey: ["recommended"] });
+      onSaved();
     },
   });
   return (
@@ -104,6 +117,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
         <label className="capitalize" key={key}>
           {key}
           <textarea
+            aria-label={key}
             name={key}
             rows={key === "summary" ? 3 : 2}
             maxLength={10000}
@@ -115,18 +129,13 @@ function ProfileForm({ profile }: { profile: Profile }) {
         <button className="button" disabled={save.isPending}>
           {save.isPending ? "Saving…" : "Save profile"}
         </button>
-        {save.isSuccess && (
-          <span role="status" className="success">
-            <CheckCircle2 size={16} />
-            Profile saved
-          </span>
-        )}
       </div>
       <Notice error={save.error} />
     </form>
   );
 }
 export function ProfilePage() {
+  const [saved, setSaved] = useState(false);
   const result = useQuery({
     queryKey: ["profile"],
     queryFn: () => api<Profile>("/api/profile"),
@@ -135,6 +144,7 @@ export function ProfilePage() {
   const remove = useMutation({
     mutationFn: () => api("/api/profile", { method: "DELETE" }),
     onSuccess: () => {
+      setSaved(false);
       void cache.invalidateQueries();
     },
   });
@@ -150,12 +160,22 @@ export function ProfilePage() {
           </Link>
         }
       />
-      <Notice pending={result.isPending} error={result.error} />
+      <Notice
+        pending={result.isPending}
+        error={result.error}
+        retry={() => void result.refetch()}
+      />
       {result.data && (
         <ProfileForm
           key={JSON.stringify(result.data)}
           profile={{ ...emptyProfile, ...result.data }}
+          onSaved={() => setSaved(true)}
         />
+      )}
+      {saved && (
+        <p role="status" className="success">
+          <CheckCircle2 size={16} /> Profile saved
+        </p>
       )}
       <div className="privacy-note">
         <h3>Your information stays in your workspace.</h3>
@@ -178,18 +198,83 @@ export function ProfilePage() {
           Delete my candidate data
         </button>
         <Notice error={remove.error} />
+        {remove.isSuccess && (
+          <p role="status" className="success">
+            Your stored candidate data was deleted.
+          </p>
+        )}
       </div>
     </>
   );
 }
-interface ResumeResult {
-  id: string;
-  filename: string;
-  extracted_profile: Profile;
+function StoredResume({ item }: { item: ResumeSummary }) {
+  const [open, setOpen] = useState(false);
+  const cache = useQueryClient();
+  const detail = useQuery({
+    queryKey: ["resume", item.id],
+    queryFn: () => api<ResumeResult>(`/api/resumes/${item.id}`),
+    enabled: open,
+  });
+  const remove = useMutation({
+    mutationFn: () => api(`/api/resumes/${item.id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      cache.removeQueries({ queryKey: ["resume", item.id] });
+      void cache.invalidateQueries({ queryKey: ["resumes"] });
+    },
+  });
+  return (
+    <article className="stored-resume">
+      <div className="section-heading">
+        <div>
+          <h3>{item.filename}</h3>
+          <small>Uploaded {date(item.created_at)}</small>
+        </div>
+        <button
+          className="text-link danger"
+          disabled={remove.isPending}
+          onClick={() => {
+            if (
+              window.confirm(
+                `Delete stored extraction for ${item.filename}? Your edited profile will be kept.`,
+              )
+            )
+              remove.mutate();
+          }}
+        >
+          Delete extraction
+        </button>
+      </div>
+      <button
+        className="text-link"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        {open ? "Hide extracted text" : "Review extracted text"}
+      </button>
+      {open && (
+        <>
+          <Notice
+            pending={detail.isPending}
+            error={detail.error}
+            retry={() => void detail.refetch()}
+          />
+          {detail.data && (
+            <pre className="resume-text">{detail.data.extracted_text}</pre>
+          )}
+        </>
+      )}
+      <Notice error={remove.error} />
+    </article>
+  );
 }
 export function ResumePage() {
   const cache = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<Error | null>(null);
+  const history = useQuery({
+    queryKey: ["resumes"],
+    queryFn: () => api<ResumeSummary[]>("/api/resumes"),
+  });
   const upload = useMutation({
     mutationFn: () => {
       const data = new FormData();
@@ -199,6 +284,7 @@ export function ResumePage() {
     onSuccess: () => {
       void cache.invalidateQueries({ queryKey: ["profile"] });
       void cache.invalidateQueries({ queryKey: ["recommended"] });
+      void cache.invalidateQueries({ queryKey: ["resumes"] });
     },
   });
   return (
@@ -214,7 +300,7 @@ export function ResumePage() {
             className="upload-zone"
             onSubmit={(e) => {
               e.preventDefault();
-              upload.mutate();
+              if (file && !fileError) upload.mutate();
             }}
           >
             <div className="upload-icon">
@@ -224,6 +310,10 @@ export function ResumePage() {
             <p className="muted">
               PDF only · up to 5 MB · no scanned or encrypted files
             </p>
+            <p className="fine-print">
+              Uploading replaces your saved profile with extracted fields.
+              Review and edit them afterwards.
+            </p>
             <label className="file-label">
               Choose your resume
               <input
@@ -231,18 +321,30 @@ export function ResumePage() {
                 accept="application/pdf,.pdf"
                 required
                 onChange={(e) => {
-                  setFile(e.target.files?.[0] ?? null);
+                  const selected = e.target.files?.[0] ?? null;
+                  setFile(selected);
+                  setFileError(
+                    selected &&
+                      (!selected.name.toLowerCase().endsWith(".pdf") ||
+                        selected.size > 5 * 1024 * 1024 ||
+                        selected.size === 0)
+                      ? new Error("Choose a nonempty PDF up to 5 MB.")
+                      : null,
+                  );
                   upload.reset();
                 }}
               />
             </label>
             {file && <p>{file.name}</p>}
-            <button className="button" disabled={!file || upload.isPending}>
+            <button
+              className="button"
+              disabled={!file || Boolean(fileError) || upload.isPending}
+            >
               {upload.isPending ? "Reading your resume…" : "Extract profile"}
               <ArrowRight size={17} />
             </button>
           </form>
-          <Notice error={upload.error} />
+          <Notice error={fileError || upload.error} />
           {upload.data && (
             <div className="extraction-result">
               <h3>
@@ -280,17 +382,42 @@ export function ResumePage() {
           </ul>
         </aside>
       </div>
+      <section className="panel">
+        <h2>Your stored resume extractions</h2>
+        <p className="muted">
+          Review or delete previously extracted text. Deleting an extraction
+          keeps your edited profile. Latest 100 uploads.
+        </p>
+        <Notice
+          pending={history.isPending}
+          error={history.error}
+          retry={() => void history.refetch()}
+          empty={history.data?.length === 0}
+        >
+          No resume extractions stored yet. You can also enter your profile
+          manually.
+        </Notice>
+        {history.data?.map((item) => (
+          <StoredResume key={item.id} item={item} />
+        ))}
+      </section>
     </>
   );
 }
 export function RecommendedPage() {
   const [minScore, setMinScore] = useState("0");
   const [algorithm, setAlgorithm] = useState("production");
+  const readiness = useQuery({
+    queryKey: ["readiness"],
+    queryFn: () => api<Readiness>("/ready"),
+  });
+  const releaseOnly = Boolean(readiness.data?.bundle_id);
+  const effectiveAlgorithm = releaseOnly ? "production" : algorithm;
   const result = useQuery({
-    queryKey: ["recommended", minScore, algorithm],
+    queryKey: ["recommended", minScore, effectiveAlgorithm],
     queryFn: () =>
       api<Match[]>(
-        `/api/jobs/recommended?min_score=${minScore}${algorithm === "production" ? "" : `&algorithm=${algorithm}`}`,
+        `/api/jobs/recommended?min_score=${minScore}${effectiveAlgorithm === "production" ? "" : `&algorithm=${effectiveAlgorithm}`}`,
       ),
   });
   return (
@@ -321,7 +448,8 @@ export function RecommendedPage() {
         <label>
           Ranking approach
           <select
-            value={algorithm}
+            value={effectiveAlgorithm}
+            disabled={releaseOnly}
             onChange={(e) => setAlgorithm(e.target.value)}
           >
             <option value="production">Production model</option>
@@ -331,10 +459,17 @@ export function RecommendedPage() {
           </select>
         </label>
       </div>
+      {releaseOnly && (
+        <p className="fine-print">
+          Serving verified production release: {readiness.data?.algorithm}.
+          Experiment comparisons are available on Model experiments.
+        </p>
+      )}
       <Notice
         pending={result.isPending}
         error={result.error}
         empty={result.data?.length === 0}
+        retry={() => void result.refetch()}
       >
         Add your skills or resume, or lower the minimum match score.
       </Notice>

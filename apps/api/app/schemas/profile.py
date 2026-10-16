@@ -27,10 +27,13 @@ class ProfileData(BaseModel):
         return normalize_skills(skills)
 
 
-class ResumeOut(BaseModel):
+class ResumeSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     filename: str
+    created_at: datetime
+
+
+class ResumeOut(ResumeSummary):
     extracted_text: str
     extracted_profile: ProfileData
-    created_at: datetime

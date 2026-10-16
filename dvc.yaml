@@ -73,3 +73,19 @@ stages:
           cache: false
       - ml/artifacts/registry.json:
           cache: false
+  export_model:
+    cmd: python -m pipelines.export_model
+    deps:
+      - pipelines/export_model.py
+      - pipelines/common.py
+      - ml/inference
+      - ml/features/skills.py
+      - requirements-runtime.lock
+      - ml/artifacts/model.json
+      - ml/artifacts/registry.json
+      - ml/artifacts/evaluation.json
+      - ml/artifacts/training.json
+      - ml/artifacts/tfidf.joblib
+      - ml/artifacts/sentence-transformer
+    outs:
+      - ml/artifacts/production

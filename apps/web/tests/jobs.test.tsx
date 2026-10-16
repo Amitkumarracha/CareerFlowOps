@@ -86,7 +86,20 @@ describe("job discovery", () => {
     );
   });
   it("uses the official URL and saves through the authenticated API", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response("{}"));
+    let saved = false;
+    const fetchMock = vi.fn().mockImplementation((_url, init: RequestInit) => {
+      if (init.method === "POST") saved = true;
+      if (init.method === "DELETE") saved = false;
+      return Promise.resolve(
+        init.method === "DELETE"
+          ? new Response(null, { status: 204 })
+          : new Response(
+              JSON.stringify(
+                saved ? [{ id: "saved", job, created_at: "2026-01-01" }] : [],
+              ),
+            ),
+      );
+    });
     vi.stubGlobal("fetch", fetchMock);
     sessionStorage.setItem("careerflowops-candidate", "test-token");
     render(wrapper(<JobCard job={job} />));
@@ -94,12 +107,25 @@ describe("job discovery", () => {
       "href",
       job.apply_url,
     );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Save Test engineer" }),
+      ).toBeEnabled(),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Save Test engineer" }));
     expect(await screen.findByRole("status")).toHaveTextContent("Saved");
     const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(new Headers(options.headers).get("Authorization")).toBe(
       "Bearer test-token",
     );
+    const unsave = await screen.findByRole("button", {
+      name: "Unsave Test engineer",
+    });
+    await waitFor(() => expect(unsave).toBeEnabled());
+    fireEvent.click(unsave);
+    expect(
+      await screen.findByRole("button", { name: "Save Test engineer" }),
+    ).toHaveAttribute("aria-pressed", "false");
   });
   it("explains missing access for private pages", async () => {
     vi.stubGlobal(

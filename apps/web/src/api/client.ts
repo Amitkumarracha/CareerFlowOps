@@ -10,10 +10,19 @@ export async function api<T>(
   if (!(init.body instanceof FormData) && init.body)
     headers.set("Content-Type", "application/json");
   if (token(role)) headers.set("Authorization", `Bearer ${token(role)}`);
-  const response = await fetch(
-    `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}${path}`,
-    { ...init, headers },
-  );
+  let response: Response;
+  try {
+    response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}${path}`,
+      { ...init, headers },
+    );
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError")
+      throw error;
+    throw new Error(
+      "Cannot reach the API. Check the service connection and try again.",
+    );
+  }
   if (!response.ok) {
     if (response.status === 401 || response.status === 403)
       throw new Error(
@@ -22,10 +31,19 @@ export async function api<T>(
     const body: unknown = await response.json().catch(() => null);
     const detail =
       body && typeof body === "object" && "detail" in body ? body.detail : null;
+    const validation = Array.isArray(detail)
+      ? detail
+          .map(
+            (item: { loc?: unknown[]; msg?: string }) =>
+              `${item.loc?.slice(1).join(".") || "Input"}: ${item.msg ?? "Invalid value"}`,
+          )
+          .join("; ")
+      : null;
     throw new Error(
       typeof detail === "string"
         ? detail
-        : `Request failed (${response.status}). Check your input and try again.`,
+        : validation ||
+            `Request failed (${response.status}). Check your input and try again.`,
     );
   }
   if (response.status === 204) return undefined as T;

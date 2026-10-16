@@ -1,27 +1,9 @@
-import {
-  Bookmark,
-  ArrowUpRight,
-  MapPin,
-  BriefcaseBusiness,
-} from "lucide-react";
+import { ArrowUpRight, MapPin, BriefcaseBusiness } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../api/client";
+import { SaveButton } from "./SaveButton";
 import type { Job, Match } from "../types";
 import { date, percent } from "../utils/format";
 export function JobCard({ job, match }: { job: Job; match?: Match }) {
-  const cache = useQueryClient();
-  const save = useMutation({
-    mutationFn: () =>
-      api("/api/saved", {
-        method: "POST",
-        body: JSON.stringify({ job_id: job.id }),
-      }),
-    onSuccess: () => {
-      void cache.invalidateQueries({ queryKey: ["saved"] });
-      void cache.invalidateQueries({ queryKey: ["applications"] });
-    },
-  });
   const sourceNames = [...new Set(job.sources.map((s) => s.source_name))];
   return (
     <article className="job-card">
@@ -33,15 +15,7 @@ export function JobCard({ job, match }: { job: Job; match?: Match }) {
           <span className="company-name">{job.company}</span>
           <span className="source">{sourceNames.join(" · ")}</span>
         </div>
-        <button
-          className="icon-button"
-          title="Save job"
-          aria-label={`Save ${job.title}`}
-          onClick={() => save.mutate()}
-          disabled={save.isPending || save.isSuccess}
-        >
-          <Bookmark size={18} fill={save.isSuccess ? "currentColor" : "none"} />
-        </button>
+        <SaveButton jobId={job.id} title={job.title} />
       </div>
       <h3>
         <Link to={`/jobs/${job.id}`}>{job.title}</Link>
@@ -66,9 +40,10 @@ export function JobCard({ job, match }: { job: Job; match?: Match }) {
             {skill}
           </span>
         ))}
-        {job.sources.every((s) => s.verification_status === "snapshot") && (
-          <span className="chip amber">Source snapshot</span>
-        )}
+        {job.sources.length > 0 &&
+          job.sources.every((s) => s.verification_status === "snapshot") && (
+            <span className="chip amber">Source snapshot</span>
+          )}
       </div>
       {match && (
         <div className="match-summary">
@@ -95,16 +70,6 @@ export function JobCard({ job, match }: { job: Job; match?: Match }) {
           </a>
         )}
       </div>
-      {save.error && (
-        <p role="alert" className="inline-error">
-          {save.error.message}
-        </p>
-      )}
-      {save.isSuccess && (
-        <p role="status" className="success">
-          Saved to your workspace
-        </p>
-      )}
     </article>
   );
 }

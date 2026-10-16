@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     sentence_transformer_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     ranking_algorithm: str = "hybrid"
     use_model_registry: bool = False
+    model_bundle_path: Path | None = None
     prometheus_enabled: bool = True
     log_level: str = "INFO"
 
