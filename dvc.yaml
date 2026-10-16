@@ -1,0 +1,75 @@
+stages:
+  ingest:
+    cmd: python -m pipelines.ingest --fixtures --export data/raw/snapshot.json
+    deps:
+      - pipelines/ingest.py
+      - ingestion
+      - data/samples/greenhouse.json
+      - data/samples/lever.json
+      - data/samples/ashby.json
+      - data/samples/manifest.json
+      - sources.yaml
+    outs:
+      - data/raw/snapshot.json
+  preprocess:
+    cmd: python -m pipelines.preprocess
+    deps:
+      - pipelines/preprocess.py
+      - ingestion
+      - ml/features
+      - sources.yaml
+      - data/raw/snapshot.json
+    outs:
+      - data/interim/jobs.json
+  build_training_set:
+    cmd: python -m pipelines.build_training_set
+    deps:
+      - pipelines/build_training_set.py
+      - pipelines/common.py
+      - data/interim/jobs.json
+      - data/samples/labels.json
+    outs:
+      - data/processed/dataset.json
+  train:
+    cmd: python -m pipelines.train
+    deps:
+      - pipelines/train.py
+      - pipelines/common.py
+      - ml/inference
+      - ml/features
+      - data/processed/dataset.json
+    params: [seed, ranking]
+    outs:
+      - ml/artifacts/tfidf.joblib
+      - ml/artifacts/embeddings.npy
+      - ml/artifacts/sentence-transformer
+      - ml/artifacts/training.json
+  evaluate:
+    cmd: python -m pipelines.evaluate
+    deps:
+      - pipelines/evaluate.py
+      - pipelines/common.py
+      - ml/evaluate
+      - ml/inference
+      - data/processed/dataset.json
+      - ml/artifacts/tfidf.joblib
+      - ml/artifacts/sentence-transformer
+      - ml/artifacts/training.json
+    metrics:
+      - ml/artifacts/evaluation.json:
+          cache: false
+  register:
+    cmd: python infra/scripts/host.py python -m pipelines.register
+    always_changed: true
+    deps:
+      - pipelines/register.py
+      - ml/registry
+      - ml/artifacts/evaluation.json
+      - ml/artifacts/tfidf.joblib
+      - ml/artifacts/sentence-transformer
+      - ml/artifacts/training.json
+    outs:
+      - ml/artifacts/model.json:
+          cache: false
+      - ml/artifacts/registry.json:
+          cache: false

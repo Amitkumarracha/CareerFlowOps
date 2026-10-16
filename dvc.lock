@@ -1,0 +1,226 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python -m pipelines.ingest --fixtures --export data/raw/snapshot.json
+    deps:
+    - path: data/samples/ashby.json
+      hash: md5
+      md5: cdce2121faca7550d15635f016ca175d
+      size: 130129
+    - path: data/samples/greenhouse.json
+      hash: md5
+      md5: a4c543d16f33117e4e54211cacf33a39
+      size: 77321
+    - path: data/samples/lever.json
+      hash: md5
+      md5: 4b56f2b998b122c5bdf9370acd3dd663
+      size: 217140
+    - path: data/samples/manifest.json
+      hash: md5
+      md5: 3b8326eb88fd2561acc4ffdd2fa8d1d4
+      size: 644
+    - path: ingestion
+      hash: md5
+      md5: 5c8a70b9ef1829482987452788436d86.dir
+      size: 40332
+      nfiles: 18
+    - path: pipelines/ingest.py
+      hash: md5
+      md5: b4d3749351b17e1f976a7b786e01386c
+      size: 1397
+    - path: sources.yaml
+      hash: md5
+      md5: f9004aa8d379de75bd96116994df518d
+      size: 180
+    outs:
+    - path: data/raw/snapshot.json
+      hash: md5
+      md5: 22458388af83d538cb23cc478cc07d9c
+      size: 428492
+  preprocess:
+    cmd: python -m pipelines.preprocess
+    deps:
+    - path: data/raw/snapshot.json
+      hash: md5
+      md5: 22458388af83d538cb23cc478cc07d9c
+      size: 428492
+    - path: ingestion
+      hash: md5
+      md5: 5c8a70b9ef1829482987452788436d86.dir
+      size: 40332
+      nfiles: 18
+    - path: ml/features
+      hash: md5
+      md5: 6aafde77e021473c1679c7b26c40ae69.dir
+      size: 5079
+      nfiles: 4
+    - path: pipelines/preprocess.py
+      hash: md5
+      md5: 42b3efafff2afb6f48dbd93f42cea1c4
+      size: 1189
+    - path: sources.yaml
+      hash: md5
+      md5: f9004aa8d379de75bd96116994df518d
+      size: 180
+    outs:
+    - path: data/interim/jobs.json
+      hash: md5
+      md5: 7ccee10af9bbe3af6ccf6bf5625671b6
+      size: 150973
+  build_training_set:
+    cmd: python -m pipelines.build_training_set
+    deps:
+    - path: data/interim/jobs.json
+      hash: md5
+      md5: 7ccee10af9bbe3af6ccf6bf5625671b6
+      size: 150973
+    - path: data/samples/labels.json
+      hash: md5
+      md5: 8890c9246984edc077c2bddd69f2ce6b
+      size: 3818
+    - path: pipelines/build_training_set.py
+      hash: md5
+      md5: c09648492f1c98b36fd38fce3752c96d
+      size: 1284
+    - path: pipelines/common.py
+      hash: md5
+      md5: 62e41e4bf0dcd68a085852d156ad4266
+      size: 762
+    outs:
+    - path: data/processed/dataset.json
+      hash: md5
+      md5: 63135aed00440ba45eaf17df380a4091
+      size: 168920
+  train:
+    cmd: python -m pipelines.train
+    deps:
+    - path: data/processed/dataset.json
+      hash: md5
+      md5: 63135aed00440ba45eaf17df380a4091
+      size: 168920
+    - path: ml/features
+      hash: md5
+      md5: 6aafde77e021473c1679c7b26c40ae69.dir
+      size: 5079
+      nfiles: 4
+    - path: ml/inference
+      hash: md5
+      md5: b180f74e6e66bd0908a760231517ed97.dir
+      size: 21244
+      nfiles: 4
+    - path: pipelines/common.py
+      hash: md5
+      md5: 62e41e4bf0dcd68a085852d156ad4266
+      size: 762
+    - path: pipelines/train.py
+      hash: md5
+      md5: 7951c17ab11a9f3f02c8e32df2a96bca
+      size: 3056
+    params:
+      params.yaml:
+        ranking:
+          semantic: 0.4
+          skill: 0.3
+          eligibility: 0.15
+          location: 0.08
+          freshness: 0.07
+        seed: 42
+    outs:
+    - path: ml/artifacts/embeddings.npy
+      hash: md5
+      md5: c758747121fe23bd811ce0bd40d3385d
+      size: 44672
+    - path: ml/artifacts/sentence-transformer
+      hash: md5
+      md5: dafaaef3be7669137d713c49ba048b61.dir
+      size: 91588736
+      nfiles: 9
+    - path: ml/artifacts/tfidf.joblib
+      hash: md5
+      md5: b939ead2161885a521ef4a40e7515b25
+      size: 240726
+    - path: ml/artifacts/training.json
+      hash: md5
+      md5: d469dd1589f507a0940eceac65822e26
+      size: 820
+  evaluate:
+    cmd: python -m pipelines.evaluate
+    deps:
+    - path: data/processed/dataset.json
+      hash: md5
+      md5: 63135aed00440ba45eaf17df380a4091
+      size: 168920
+    - path: ml/artifacts/sentence-transformer
+      hash: md5
+      md5: dafaaef3be7669137d713c49ba048b61.dir
+      size: 91588736
+      nfiles: 9
+    - path: ml/artifacts/tfidf.joblib
+      hash: md5
+      md5: b939ead2161885a521ef4a40e7515b25
+      size: 240726
+    - path: ml/artifacts/training.json
+      hash: md5
+      md5: d469dd1589f507a0940eceac65822e26
+      size: 820
+    - path: ml/evaluate
+      hash: md5
+      md5: 6ca4abc28be830db5492c321fa437e57.dir
+      size: 4123
+      nfiles: 4
+    - path: ml/inference
+      hash: md5
+      md5: b180f74e6e66bd0908a760231517ed97.dir
+      size: 21244
+      nfiles: 4
+    - path: pipelines/common.py
+      hash: md5
+      md5: 62e41e4bf0dcd68a085852d156ad4266
+      size: 762
+    - path: pipelines/evaluate.py
+      hash: md5
+      md5: 1b64e7c2de73b3f4a4f25d8bf4fe0127
+      size: 3513
+    outs:
+    - path: ml/artifacts/evaluation.json
+      hash: md5
+      md5: 91f80bb89dd116369a6704d84ff012ce
+      size: 5129
+  register:
+    cmd: python infra/scripts/host.py python -m pipelines.register
+    deps:
+    - path: ml/artifacts/evaluation.json
+      hash: md5
+      md5: 91f80bb89dd116369a6704d84ff012ce
+      size: 5129
+    - path: ml/artifacts/sentence-transformer
+      hash: md5
+      md5: dafaaef3be7669137d713c49ba048b61.dir
+      size: 91588736
+      nfiles: 9
+    - path: ml/artifacts/tfidf.joblib
+      hash: md5
+      md5: b939ead2161885a521ef4a40e7515b25
+      size: 240726
+    - path: ml/artifacts/training.json
+      hash: md5
+      md5: d469dd1589f507a0940eceac65822e26
+      size: 820
+    - path: ml/registry
+      hash: md5
+      md5: 28ccf0c2a360d8493e96dd23fe91ac45.dir
+      size: 3687
+      nfiles: 4
+    - path: pipelines/register.py
+      hash: md5
+      md5: 8e04c5070f7de6efcd19e13d57f890bf
+      size: 4898
+    outs:
+    - path: ml/artifacts/model.json
+      hash: md5
+      md5: e08e85cab99e4e77489909fd6c5b07da
+      size: 198
+    - path: ml/artifacts/registry.json
+      hash: md5
+      md5: 05dbdf2977b31f502ff3449fe087da66
+      size: 280
