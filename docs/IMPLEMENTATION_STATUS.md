@@ -1,0 +1,9 @@
+# Implementation status
+
+Implementation in progress. Original feature documentation was absent; see 32_DECISIONS.md.
+
+Checks and limitations will be recorded with actual execution evidence.
+
+## Phase 1 — bootstrap
+
+Added API config/db/health/readiness, migrations scaffold, strict React/Vite/Tailwind frontend, Dockerfiles/Compose, dependency locks, Makefile and setup docs. PostgreSQL 16 started healthy on the system Docker daemon. Alembic upgrade completed. Live API /health and /ready and frontend / returned HTTP 200. Initial Python test passed; Python lint/format passed. Frontend checks recorded after dependency audit fixes. Full image builds will be verified after feature implementation. No GitHub remote supplied; local Git initialized for requested phase commits.

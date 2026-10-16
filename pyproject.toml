@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "careerflowops"
+version = "0.1.0"
+description = "Official job discovery and explainable resume matching"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn[standard]>=0.34,<1", "pydantic-settings>=2.7,<3",
+  "sqlalchemy>=2.0,<3", "psycopg[binary]>=3.2,<4", "alembic>=1.14,<2",
+  "httpx>=0.28,<1", "python-multipart>=0.0.20,<1", "pymupdf>=1.25,<2",
+  "scikit-learn>=1.6,<2", "pandas>=2.2,<4", "numpy>=2,<3", "pyyaml>=6,<7",
+  "prometheus-client>=0.21,<1"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
+mlops = ["mlflow>=3,<4", "dvc>=3,<4"]
+semantic = ["sentence-transformers>=5,<6"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["apps", "ingestion", "ml", "pipelines"]
+
+[tool.pytest.ini_options]
+testpaths = ["apps/api/tests", "tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]

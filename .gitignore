@@ -1,0 +1,24 @@
+# Local environment files may contain secrets. Keep the shared template.
+.env
+.env.*
+!.env.example
+
+# Local DVC remote storage.
+/dvc-storage/
+
+.venv*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+**/node_modules/
+**/dist/
+*.tsbuildinfo
+*.db
+data/raw/
+data/private/
+data/interim/
+data/processed/
+ml/artifacts/
+mlruns/
+mlartifacts/

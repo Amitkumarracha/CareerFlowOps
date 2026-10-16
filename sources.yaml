@@ -1,0 +1,10 @@
+sources:
+  - name: greenhouse
+    board: stripe
+    company: Stripe
+  - name: lever
+    board: palantir
+    company: Palantir
+  - name: ashby
+    board: linear
+    company: Linear

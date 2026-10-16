@@ -1,0 +1,7 @@
+seed: 42
+ranking:
+  semantic: 0.40
+  skill: 0.30
+  eligibility: 0.15
+  location: 0.08
+  freshness: 0.07

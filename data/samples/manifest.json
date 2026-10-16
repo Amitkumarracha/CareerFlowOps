@@ -1,0 +1,23 @@
+[
+  {
+    "source": "greenhouse",
+    "url": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs?content=true",
+    "retrieved_at": "2026-10-16T11:42:37.149632+00:00",
+    "selected_jobs": 10,
+    "total_at_capture": 729
+  },
+  {
+    "source": "lever",
+    "url": "https://api.lever.co/v0/postings/palantir?mode=json",
+    "retrieved_at": "2026-10-16T11:42:43.523724+00:00",
+    "selected_jobs": 10,
+    "total_at_capture": 309
+  },
+  {
+    "source": "ashby",
+    "url": "https://api.ashbyhq.com/posting-api/job-board/linear",
+    "retrieved_at": "2026-10-16T11:42:43.712168+00:00",
+    "selected_jobs": 10,
+    "total_at_capture": 31
+  }
+]
