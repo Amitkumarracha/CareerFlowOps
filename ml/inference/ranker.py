@@ -68,7 +68,12 @@ def embeddings(documents: tuple[str, ...], model_name: str) -> np.ndarray:
 
 
 def semantic_scores(
-    text: str, documents: tuple[str, ...], algorithm: str, model_name: str, allow_fallback: bool
+    text: str,
+    documents: tuple[str, ...],
+    algorithm: str,
+    model_name: str,
+    allow_fallback: bool,
+    fitted_vectorizer: TfidfVectorizer | None = None,
 ) -> tuple[list[float], str, str | None]:
     if algorithm == "tfidf":
         backend = "tfidf"
@@ -89,7 +94,11 @@ def semantic_scores(
                 "Embedding model unavailable locally; semantic component uses the TF-IDF fallback."
             )
     try:
-        vectorizer, matrix = tfidf_index(documents)
+        vectorizer, matrix = (
+            (fitted_vectorizer, fitted_vectorizer.transform(documents))
+            if fitted_vectorizer is not None
+            else tfidf_index(documents)
+        )
         scores = cosine_similarity(vectorizer.transform([text]), matrix)[0]
         return np.clip(scores, 0, 1).tolist(), backend, fallback
     except ValueError:
@@ -132,6 +141,7 @@ def rank_jobs(
     model_name: str = MODEL,
     allow_fallback: bool = True,
     model_version: str = "local-v1",
+    fitted_vectorizer: TfidfVectorizer | None = None,
 ) -> list[dict[str, Any]]:
     if algorithm not in {"tfidf", "sentence_transformer", "hybrid"}:
         raise ValueError("Unsupported ranking algorithm")
@@ -145,6 +155,7 @@ def rank_jobs(
         algorithm,
         model_name,
         allow_fallback,
+        fitted_vectorizer,
     )
     candidate_skills = set(normalize_skills(profile.get("skills", [])))
     results: list[dict[str, Any]] = []

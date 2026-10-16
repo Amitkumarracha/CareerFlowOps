@@ -1,0 +1,4 @@
+-r requirements.lock
+mlflow==3.17.1
+sentence-transformers==5.7.0
+torch==2.14.1+cpu
