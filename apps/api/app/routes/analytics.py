@@ -1,4 +1,5 @@
 import json
+import re
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -78,7 +79,21 @@ def tpo(db: Session = Depends(get_db)) -> dict:
         skills = {skill.skill for skill in job.skills}
         matched = 0
         unknown = 0
-        categories[job.employment_type or "Not specified"] += 1
+        category = next(
+            (
+                label
+                for pattern, label in [
+                    (r"engineer|developer", "Engineering"),
+                    (r"sales|account executive", "Sales"),
+                    (r"support", "Support"),
+                    (r"product manager", "Product management"),
+                    (r"administrat|business partner", "Operations"),
+                ]
+                if re.search(pattern, job.title, re.I)
+            ),
+            "Other",
+        )
+        categories[category] += 1
         for profile in profiles:
             candidate_skills = set(profile.skills)
             if not candidate_skills:

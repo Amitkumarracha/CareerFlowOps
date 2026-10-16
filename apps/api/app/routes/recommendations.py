@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import perf_counter
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,6 +10,7 @@ from apps.api.app.config import get_settings
 from apps.api.app.db import get_db
 from apps.api.app.dependencies.auth import candidate
 from apps.api.app.models.entities import CandidateProfile, Job
+from apps.api.app.observability import INFERENCE_LATENCY, MODEL, RECOMMENDATIONS, SCORES
 from apps.api.app.schemas.profile import ProfileData
 from apps.api.app.schemas.recommendations import MatchOut
 from apps.api.app.services.jobs import serialize_job
@@ -26,6 +28,7 @@ def recommended(
     candidate_id: str = Depends(candidate),
     db: Session = Depends(get_db),
 ) -> list[dict]:
+    RECOMMENDATIONS.inc()
     profile = db.get(CandidateProfile, candidate_id)
     if profile is None or not (
         profile.skills or profile.summary or profile.experience or profile.projects
@@ -48,6 +51,7 @@ def recommended(
     lookup = {job["id"]: job for job in job_data}
     profile_data = ProfileData.model_validate(profile).model_dump()
     settings = get_settings()
+    start = perf_counter()
     registry_fallback: str | None = None
     if settings.use_model_registry and algorithm is None:
         try:
@@ -75,6 +79,11 @@ def recommended(
             if local_model.is_dir()
             else settings.sentence_transformer_model,
         )
+    INFERENCE_LATENCY.observe(perf_counter() - start)
+    if predictions:
+        MODEL.info(
+            {"algorithm": predictions[0]["algorithm"], "version": predictions[0]["model_version"]}
+        )
     output = []
     for prediction in predictions:
         if prediction["overall_score"] < min_score:
@@ -85,5 +94,6 @@ def recommended(
             data["fallback_reason"] = " ".join(
                 filter(None, [registry_fallback, data.get("fallback_reason")])
             )
+        SCORES.observe(data["overall_score"])
         output.append(data)
     return output[:limit]

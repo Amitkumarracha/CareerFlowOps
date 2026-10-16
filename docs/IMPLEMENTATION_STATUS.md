@@ -51,3 +51,7 @@ Added protected idempotent save/unsave and application creation/list/update, all
 ## Phase 12 — TPO analytics
 
 Added protected aggregate TPO endpoint with real student/job/application counts, company/category/skill-gap distributions, current-status funnel and potential candidate matching counts. No names, emails or resume text are returned. Match breakdown is explicitly bounded to 100 jobs/500 active profiles. Added saved-artifact MLOps dashboard API. Aggregate privacy and zero-data tests passed.
+
+## Phase 13 — monitoring
+
+Added /metrics, bounded route-label HTTP counters/latencies, ingestion/source/failure/normalization/dedup counters, recommendation/inference/score metrics and model identity. Structured route/status/duration logs omit request bodies and credentials. Added multipart upload stream/length limits, safe DB error responses, Prometheus scrape configuration and provisioned Grafana dashboards. Twenty-five backend tests passed including metrics labels, disabled metrics, aggregate privacy and upload guard. Monitoring containers are optional via the monitoring Compose profile and will be checked in final integration.

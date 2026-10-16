@@ -1,0 +1,255 @@
+{
+  "title": "CareerFlowOps \u2014 application & model health",
+  "uid": "careerflowops",
+  "schemaVersion": 40,
+  "version": 1,
+  "refresh": "15s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP requests / second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(careerflowops_http_requests_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "HTTP p95 latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95,sum by (le) (rate(careerflowops_http_duration_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "HTTP error rate",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(careerflowops_http_requests_total{status=~\"5..\"}[5m])) / clamp_min(sum(rate(careerflowops_http_requests_total[5m])), 0.001)",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Ingestion runs by status",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (status) (careerflowops_ingestion_runs_total)",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Fetched jobs by source",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (source) (careerflowops_jobs_fetched_total)",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Ingestion failures",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (source) (careerflowops_ingestion_failures_total)",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Normalized jobs / duplicates",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "careerflowops_jobs_normalized_total or careerflowops_duplicates_detected_total",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Recommendation requests",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "careerflowops_recommendation_requests_total",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "ML p95 inference latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(careerflowops_inference_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Match score distribution",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (le) (careerflowops_prediction_score_bucket)",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Active model",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "careerflowops_model_info",
+          "refId": "A",
+          "legendFormat": "{{source}} {{status}} {{algorithm}} {{version}}"
+        }
+      ]
+    }
+  ]
+}

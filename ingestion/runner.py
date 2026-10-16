@@ -19,6 +19,13 @@ from apps.api.app.models.entities import (
     JobSourceOccurrence,
     now,
 )
+from apps.api.app.observability import (
+    DUPLICATES,
+    INGESTION_FAILURES,
+    INGESTION_RUNS,
+    JOBS_FETCHED,
+    NORMALIZED,
+)
 from ingestion.ashby import AshbyAdapter
 from ingestion.base import RawJob, SourceAdapter, SourceConfig
 from ingestion.greenhouse import GreenhouseAdapter
@@ -176,4 +183,11 @@ def run_ingestion(
     run.counts = counts
     run.finished_at = now()
     db.commit()
+    INGESTION_RUNS.labels(run.status).inc()
+    NORMALIZED.inc(counts["normalized"])
+    DUPLICATES.inc(counts["duplicates"])
+    for name, count in counts["by_source"].items():
+        JOBS_FETCHED.labels(name).inc(count)
+    for error in errors:
+        INGESTION_FAILURES.labels(error.split(":", 1)[0]).inc()
     return run

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from apps.api.app.config import get_settings
 from apps.api.app.db import get_db
+from apps.api.app.observability import instrument
 from apps.api.app.routes.admin import router as admin_router
 from apps.api.app.routes.analytics import router as analytics_router
 from apps.api.app.routes.applications import router as application_router
@@ -48,3 +49,5 @@ app.include_router(profile_router)
 app.include_router(application_router)
 
 app.include_router(analytics_router)
+
+instrument(app)
