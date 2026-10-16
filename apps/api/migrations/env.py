@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 
 from apps.api.app.config import get_settings
 from apps.api.app.db import Base
+from apps.api.app.models import entities  # noqa: F401
 
 config = context.config
 url = get_settings().database_url
