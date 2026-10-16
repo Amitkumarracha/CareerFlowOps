@@ -84,3 +84,23 @@ def test_candidate_cannot_read_another_resume(client, db) -> None:
     db.add(resume)
     db.commit()
     assert client.get("/api/resumes/" + resume.id, headers=AUTH).status_code == 404
+
+
+def test_encrypted_and_excessive_page_pdfs_are_rejected(client) -> None:
+    with pymupdf.open() as document:
+        document.new_page()
+        encrypted = document.tobytes(
+            encryption=pymupdf.PDF_ENCRYPT_AES_256, user_pw="test-only", owner_pw="test-only"
+        )
+    assert (
+        client.post("/api/resumes", headers=AUTH, files={"file": ("x.pdf", encrypted)}).status_code
+        == 422
+    )
+    with pymupdf.open() as document:
+        for _ in range(31):
+            document.new_page()
+        many_pages = document.tobytes()
+    assert (
+        client.post("/api/resumes", headers=AUTH, files={"file": ("x.pdf", many_pages)}).status_code
+        == 422
+    )

@@ -54,10 +54,14 @@ def tfidf_index(documents: tuple[str, ...]) -> tuple[TfidfVectorizer, Any]:
 
 
 @lru_cache(maxsize=2)
-def embedding_model(model_name: str = MODEL, local_only: bool = True) -> Any:
+def embedding_model(
+    model_name: str = MODEL, local_only: bool = True, revision: str | None = None
+) -> Any:
     from sentence_transformers import SentenceTransformer
 
-    return SentenceTransformer(model_name, device="cpu", local_files_only=local_only)
+    return SentenceTransformer(
+        model_name, device="cpu", local_files_only=local_only, revision=revision
+    )
 
 
 @lru_cache(maxsize=2)

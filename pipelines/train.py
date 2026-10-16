@@ -23,7 +23,11 @@ def main() -> None:
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     vectorizer, matrix = tfidf_index(tuple(job_text(job) for job in dataset["jobs"]))
     joblib.dump(vectorizer, ARTIFACTS / "tfidf.joblib")
-    model = embedding_model(local_only=False)
+    model = embedding_model(
+        parameters["embedding"]["model"],
+        local_only=False,
+        revision=parameters["embedding"]["revision"],
+    )
     model.save(str(ARTIFACTS / "sentence-transformer"))
     vectors = model.encode(
         [job_text(job) for job in dataset["jobs"]],
@@ -43,7 +47,8 @@ def main() -> None:
                     "dataset_version": dataset["dataset_version"],
                     "git_commit": git_commit(),
                     "seed": parameters["seed"],
-                    "embedding_model": settings.sentence_transformer_model,
+                    "embedding_model": parameters["embedding"]["model"],
+                    "embedding_revision": parameters["embedding"]["revision"],
                     **load_weights(environment=False),
                 }
             )
@@ -64,8 +69,8 @@ def main() -> None:
             "seed": parameters["seed"],
             "git_commit": git_commit(),
             "weights": load_weights(environment=False),
-            "embedding_model": settings.sentence_transformer_model,
-            "embedding_revision": getattr(model[0].auto_model.config, "_commit_hash", None),
+            "embedding_model": parameters["embedding"]["model"],
+            "embedding_revision": parameters["embedding"]["revision"],
             "corpus_shape": list(matrix.shape),
             "training_note": "Frozen corpus; pretrained transformer; query-disjoint splits.",
         },

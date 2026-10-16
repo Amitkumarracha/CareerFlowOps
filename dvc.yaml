@@ -38,7 +38,7 @@ stages:
       - ml/inference
       - ml/features
       - data/processed/dataset.json
-    params: [seed, ranking]
+    params: [seed, ranking, embedding]
     outs:
       - ml/artifacts/tfidf.joblib
       - ml/artifacts/embeddings.npy

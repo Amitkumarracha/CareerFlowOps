@@ -1,6 +1,7 @@
 import json
 import shutil
 import tempfile
+from importlib.metadata import version as installed_version
 from pathlib import Path
 
 from apps.api.app.config import get_settings
@@ -13,6 +14,7 @@ from pipelines.common import ARTIFACTS, read, write
 def main() -> None:
     import mlflow
     import pandas as pd
+    from mlflow.exceptions import MlflowException
     from mlflow.models import ModelSignature
     from mlflow.tracking import MlflowClient
     from mlflow.types import ColSpec, Schema
@@ -31,48 +33,66 @@ def main() -> None:
     }
     write(ARTIFACTS / "model.json", config)
     client = MlflowClient()
-    with tempfile.TemporaryDirectory() as folder:
-        code = Path(folder) / "ml"
-        shutil.copytree("ml", code, ignore=shutil.ignore_patterns("artifacts", "__pycache__"))
-        dataset = read("data/processed/dataset.json")
-        example = pd.DataFrame(
-            [
-                {
-                    "profile": json.dumps({"skills": ["python"]}),
-                    "jobs": json.dumps(dataset["jobs"][:1]),
-                }
-            ]
-        )
-        with mlflow.start_run(run_id=run["run_id"]):
-            info = mlflow.pyfunc.log_model(
-                name="ranker",
-                python_model=RankingModel(),
-                artifacts={
-                    "config": str(ARTIFACTS / "model.json"),
-                    "tfidf": str(ARTIFACTS / "tfidf.joblib"),
-                    "semantic": str(ARTIFACTS / "sentence-transformer"),
-                },
-                code_paths=[str(code)],
-                input_example=example,
-                signature=ModelSignature(
-                    inputs=Schema([ColSpec("string", "profile"), ColSpec("string", "jobs")]),
-                    outputs=Schema([ColSpec("string", "predictions")]),
-                ),
-                pip_requirements=[
-                    "mlflow==" + mlflow.__version__,
-                    "pandas",
-                    "scikit-learn",
-                    "sentence-transformers",
-                    "torch",
-                    "pyyaml",
-                    "joblib",
-                ],
-            )
-            mlflow.log_artifact(str(ARTIFACTS / "evaluation.json"), artifact_path="evaluation")
-    version = mlflow.register_model(info.model_uri, settings.mlflow_model_name)
-    client.set_registered_model_alias(
-        settings.mlflow_model_name, settings.mlflow_model_alias, version.version
+
+    dataset = read("data/processed/dataset.json")
+    example = pd.DataFrame(
+        [
+            {
+                "profile": json.dumps({"skills": ["python"]}),
+                "jobs": json.dumps(dataset["jobs"][:1]),
+            }
+        ]
     )
+    try:
+        existing = client.get_model_version_by_alias(
+            settings.mlflow_model_name, settings.mlflow_model_alias
+        )
+    except MlflowException as exc:
+        if exc.error_code != "RESOURCE_DOES_NOT_EXIST":
+            raise
+        existing = None
+    if existing is not None and existing.run_id == run["run_id"]:
+        version = existing
+    else:
+        with tempfile.TemporaryDirectory() as folder:
+            code = Path(folder) / "ml"
+            shutil.copytree("ml", code, ignore=shutil.ignore_patterns("artifacts", "__pycache__"))
+            with mlflow.start_run(run_id=run["run_id"]):
+                info = mlflow.pyfunc.log_model(
+                    name="ranker",
+                    python_model=RankingModel(),
+                    artifacts={
+                        "config": str(ARTIFACTS / "model.json"),
+                        "tfidf": str(ARTIFACTS / "tfidf.joblib"),
+                        "semantic": str(ARTIFACTS / "sentence-transformer"),
+                    },
+                    code_paths=[str(code)],
+                    input_example=example,
+                    signature=ModelSignature(
+                        inputs=Schema([ColSpec("string", "profile"), ColSpec("string", "jobs")]),
+                        outputs=Schema([ColSpec("string", "predictions")]),
+                    ),
+                    pip_requirements=[
+                        "--extra-index-url https://download.pytorch.org/whl/cpu",
+                        *[
+                            f"{name}=={installed_version(name)}"
+                            for name in [
+                                "mlflow",
+                                "pandas",
+                                "scikit-learn",
+                                "sentence-transformers",
+                                "torch",
+                                "pyyaml",
+                                "joblib",
+                            ]
+                        ],
+                    ],
+                )
+                mlflow.log_artifact(str(ARTIFACTS / "evaluation.json"), artifact_path="evaluation")
+        version = mlflow.register_model(info.model_uri, settings.mlflow_model_name)
+        client.set_registered_model_alias(
+            settings.mlflow_model_name, settings.mlflow_model_alias, version.version
+        )
     registry = {
         "model_name": settings.mlflow_model_name,
         "version": str(version.version),
@@ -102,14 +122,22 @@ def main() -> None:
                         artifact_path=str(ARTIFACTS / "evaluation.json"),
                     )
                 )
-        db.add(
-            ModelDeployment(
-                model_name=settings.mlflow_model_name,
-                version=str(version.version),
-                alias=settings.mlflow_model_alias,
-                run_id=run["run_id"],
+        deployment = db.scalar(
+            select(ModelDeployment).where(
+                ModelDeployment.model_name == settings.mlflow_model_name,
+                ModelDeployment.version == str(version.version),
+                ModelDeployment.alias == settings.mlflow_model_alias,
             )
         )
+        if deployment is None:
+            db.add(
+                ModelDeployment(
+                    model_name=settings.mlflow_model_name,
+                    version=str(version.version),
+                    alias=settings.mlflow_model_alias,
+                    run_id=run["run_id"],
+                )
+            )
         db.commit()
     loaded = mlflow.pyfunc.load_model(registry["model_uri"])
     prediction = json.loads(loaded.predict(example).iloc[0]["predictions"])

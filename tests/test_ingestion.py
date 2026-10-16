@@ -52,3 +52,34 @@ def test_source_failure_does_not_discard_success(db: Session, tmp_path) -> None:
     assert run.status == "partial"
     assert run.counts["normalized"] == 20
     assert run.errors == ["lever: HTTPStatusError"]
+
+
+def test_fixture_never_overwrites_newer_live_occurrence(db: Session, tmp_path) -> None:
+    from apps.api.app.models.entities import JobSource
+    from ingestion.runner import upsert
+
+    config = sources()[0]
+    with httpx.Client() as client:
+        adapter = ADAPTERS[config.name](config, client)
+        original = adapter.parse(
+            adapter.records(json.loads(Path("data/samples/greenhouse.json").read_text()))[0]
+        )
+    source = JobSource(name=config.name, board=config.board)
+    db.add(source)
+    db.flush()
+    upsert(db, original, source, tmp_path, True)
+    updated = original.model_copy(
+        update={
+            "description": "Updated live description",
+            "payload": {**original.payload, "content": "Updated live description"},
+        }
+    )
+    upsert(db, updated, source, tmp_path, False)
+    db.flush()
+    current_hash = db.scalars(select(JobSourceOccurrence.source_payload_hash)).one()
+    upsert(db, original, source, tmp_path, True)
+    db.commit()
+    occurrence = db.scalars(select(JobSourceOccurrence)).one()
+    assert occurrence.source_payload_hash == current_hash
+    assert occurrence.verification_status == "official_api" and occurrence.verified_at is not None
+    assert db.scalars(select(Job.description)).one() == "Updated live description"

@@ -24,3 +24,5 @@ mlruns/
 mlartifacts/
 
 mlflow-data/
+
+*.db-*

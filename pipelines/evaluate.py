@@ -1,6 +1,7 @@
 from datetime import datetime
 from time import perf_counter
 
+import joblib
 import numpy as np
 
 from apps.api.app.config import get_settings
@@ -17,6 +18,7 @@ def main() -> None:
     dataset = read("data/processed/dataset.json")
     training = read(ARTIFACTS / "training.json")
     mlflow.set_tracking_uri(get_settings().mlflow_tracking_uri)
+    vectorizer = joblib.load(ARTIFACTS / "tfidf.joblib")
     results = []
     for run in training["runs"]:
         # Warm up independently from the measured candidate queries.
@@ -43,6 +45,7 @@ def main() -> None:
                     as_of=datetime.fromisoformat(dataset["as_of"]),
                     model_name=str(ARTIFACTS / "sentence-transformer"),
                     allow_fallback=False,
+                    fitted_vectorizer=vectorizer,
                 )
                 duration = (perf_counter() - start) * 1000
                 metrics = ranking_metrics([row["job_id"] for row in ranked], query["relevance"])

@@ -66,6 +66,8 @@ def upsert(db: Session, item: RawJob, source: JobSource, raw_dir: Path, fixture:
             JobSourceOccurrence.source_job_id == item.source_job_id,
         )
     )
+    if fixture and occurrence is not None and occurrence.verification_status == "official_api":
+        return False
     canonical = db.scalar(select(Job).where(Job.fingerprint == fingerprint(item)))
     duplicate = occurrence is None and canonical is not None
     if canonical is None:
