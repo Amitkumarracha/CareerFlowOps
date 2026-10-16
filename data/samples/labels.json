@@ -1,0 +1,122 @@
+{
+  "description": "Illustrative role-based relevance judgments authored by the implementation agent for six fictional candidate queries against 29 frozen real ATS jobs. Not human-validated; tiny, nonrepresentative demo benchmark. Unlisted jobs judged nonrelevant. Validation selects the algorithm; test queries are held out.",
+  "as_of": "2026-10-16T11:42:43.712168+00:00",
+  "queries": [
+    {
+      "id": "train-backend",
+      "split": "train",
+      "profile": {
+        "summary": "Backend software engineer building reliable application services and distributed systems",
+        "skills": [
+          "python",
+          "java",
+          "sql",
+          "docker"
+        ],
+        "experience_years": 4,
+        "location": "London"
+      },
+      "relevance": {
+        "lever:10dfc8bc-99ad-4ca2-ab76-853cb90a92c2": 2,
+        "lever:ab7e3425-81d5-4705-a7b5-cd60c8a45cdb": 2,
+        "lever:6fe5515f-f677-4d98-8ac2-1775a425f5e7": 2
+      }
+    },
+    {
+      "id": "train-support",
+      "split": "train",
+      "profile": {
+        "summary": "Product support specialist helping customers troubleshoot software problems and improve workflows",
+        "skills": [
+          "sql",
+          "javascript"
+        ],
+        "experience_years": 3,
+        "location": "North America"
+      },
+      "relevance": {
+        "ashby:d062065e-05bb-42ce-a430-ec205695cc2e": 2
+      }
+    },
+    {
+      "id": "validation-design",
+      "split": "validation",
+      "profile": {
+        "summary": "Design engineer specializing in interactive brand websites and visual design systems",
+        "skills": [
+          "react",
+          "typescript",
+          "figma",
+          "css",
+          "html"
+        ],
+        "experience_years": 5,
+        "location": "Europe"
+      },
+      "relevance": {
+        "ashby:f04f398b-6320-499d-8a60-290239d62da8": 2,
+        "ashby:ea0b5868-6d7a-46fa-99d8-207cd19357a6": 2
+      }
+    },
+    {
+      "id": "validation-admin",
+      "split": "validation",
+      "profile": {
+        "summary": "Administrative business partner managing executive calendars travel expenses and cross-team coordination",
+        "skills": [
+          "excel"
+        ],
+        "experience_years": 6,
+        "location": "Singapore"
+      },
+      "relevance": {
+        "lever:6ed76ce8-4156-4b60-b120-403538bd66cd": 2,
+        "lever:ac978161-6f46-4f6b-ad9e-a258e642751c": 2,
+        "lever:a237973c-cb29-41fe-9c80-416e6f42e087": 2,
+        "lever:a5f93bb6-4f13-4451-80a4-f63090830269": 2
+      }
+    },
+    {
+      "id": "test-sales",
+      "split": "test",
+      "profile": {
+        "summary": "Account executive selling payments products to commercial businesses and AI startups with a consultative sales approach",
+        "skills": [
+          "excel"
+        ],
+        "experience_years": 7,
+        "location": "San Francisco"
+      },
+      "relevance": {
+        "greenhouse:8138044": 2,
+        "greenhouse:8238731": 2,
+        "greenhouse:8215824": 2,
+        "greenhouse:8077887": 2,
+        "greenhouse:8123027": 2,
+        "greenhouse:8141211": 2
+      }
+    },
+    {
+      "id": "test-fullstack",
+      "split": "test",
+      "profile": {
+        "summary": "Senior fullstack product engineer building polished customer-facing applications and collaborative software",
+        "skills": [
+          "typescript",
+          "react",
+          "node.js",
+          "sql"
+        ],
+        "experience_years": 8,
+        "location": "Europe"
+      },
+      "relevance": {
+        "ashby:d3bc1ced-3ce4-4086-a050-555055dbb1ff": 2,
+        "ashby:cd5ae036-0223-427a-b038-ba16ef9dcb32": 2,
+        "ashby:069c4628-88d7-4e4d-b393-c996fc7f3076": 2,
+        "ashby:12f8f208-0b9c-4569-bb3d-41c8a197029e": 2,
+        "ashby:0c7c2e26-0a98-42cf-a47c-9a3999fb513b": 2
+      }
+    }
+  ]
+}
