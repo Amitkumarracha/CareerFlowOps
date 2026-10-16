@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from apps.api.app.config import get_settings
 from apps.api.app.db import get_db
+from apps.api.app.routes.admin import router as admin_router
 from apps.api.app.schemas.health import Health
 
 settings = get_settings()
@@ -30,3 +31,6 @@ def ready(db: Session = Depends(get_db)) -> Health:
     except SQLAlchemyError as exc:
         raise HTTPException(503, "Database unavailable") from exc
     return Health(status="ready")
+
+
+app.include_router(admin_router)
