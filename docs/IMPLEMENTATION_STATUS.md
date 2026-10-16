@@ -59,3 +59,7 @@ Added /metrics, bounded route-label HTTP counters/latencies, ingestion/source/fa
 ## Phase 14 — CI/CD
 
 Added reusable PR/manual CI for backend format/lint/tests/PostgreSQL migrations and frontend type/lint/format/tests/build/audit. Main runs complete CI before SHA-tagged API/web Docker builds; ECR push requires configured OIDC role and otherwise skips. Both local Docker images built successfully; frontend production build/type/lint and five tests passed; backend reached 27 passing tests. No GitHub remote was supplied, so hosted Actions success is not claimed.
+
+## Phase 15 — AWS preparation
+
+Added EC2 deployment script with explicit immutable ECR image requirements, instance-role login, Compose migration/startup and readiness verification; prepared OIDC trust/ECR permission templates and optional Caddy TLS edge configuration. Documented operator steps, private service bindings, backups and single-candidate limitations. bash syntax check and missing-image guard test passed. No AWS credentials, repository remote, domain, cloud provisioning or deployment authorization was supplied; no cloud actions were performed.
