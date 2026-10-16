@@ -59,3 +59,16 @@ The two supplied MLOps diagrams are represented in System & guide and in working
 See [the executable AWS runbook](../infra/aws/README.md) for S3, ECR, IAM/OIDC, GitHub variables, EC2, HTTPS and monitoring commands. No paid job API or LLM API is required for this implementation. Public ATS feeds and the public pretrained embedding model are sufficient; Hugging Face authentication is optional unless upstream access requires it.
 
 Remaining product extensions are real multi-user accounts/roles, scheduled ingestion and closed-job expiry, OCR, human-validated larger evaluation data and scaling beyond the documented retrieval limits. These are outside the single-candidate MVP. Opening Apply never submits an application. Do not share a candidate token between unrelated people.
+
+## Publish the local commits
+
+Origin points at your supplied repository. The automated push could not authenticate. On this Arch Linux workstation, configure GitHub CLI yourself and then push:
+
+```bash
+sudo pacman -S github-cli
+gh auth login --hostname github.com --git-protocol https --web
+gh auth setup-git
+git push -u origin main
+```
+
+Keep tokens out of the remote URL and repository. A successful push starts GitHub checks/image builds; it does not prove the workflows passed. Inspect the Actions tab afterwards. ECR publishing additionally requires the OIDC role and repository variables in the AWS runbook.

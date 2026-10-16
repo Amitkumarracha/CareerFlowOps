@@ -116,3 +116,7 @@ This update supersedes the earlier limitations about missing browser QA and mode
 - Only the identified API overlay build-cache chain created during this update was pruned, recovering about 2 GB. Running images, databases, DVC artifacts and other project caches were preserved; approximately 2.5 GB remained free.
 
 See UI_FEATURE_GUIDE.md for pages, run commands and scope, and ../infra/aws/README.md for all AWS commands. Real multi-user identity, OCR, scheduled ingestion/closed-job expiry, a larger human-labeled benchmark and scaling remain future product work. The current model metrics remain small illustrative measurements, not production-quality evidence.
+
+### Publishing outcome
+
+Implementation is committed locally as `9596657`. Pushing `main` to the supplied origin was attempted and failed because HTTPS GitHub authentication is not configured (`could not read Username`, terminal prompts disabled). No remote changes or hosted Actions execution are claimed. Authenticate locally and run `git push -u origin main`; all implementation commits are ready to publish.
