@@ -8,6 +8,7 @@ from apps.api.app.config import get_settings
 from apps.api.app.db import get_db
 from apps.api.app.routes.admin import router as admin_router
 from apps.api.app.routes.jobs import router as jobs_router
+from apps.api.app.routes.profile import router as profile_router
 from apps.api.app.schemas.health import Health
 
 settings = get_settings()
@@ -37,3 +38,5 @@ def ready(db: Session = Depends(get_db)) -> Health:
 app.include_router(admin_router)
 
 app.include_router(jobs_router)
+
+app.include_router(profile_router)
