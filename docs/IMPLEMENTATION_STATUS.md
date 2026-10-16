@@ -1,6 +1,6 @@
 # Implementation status
 
-Implementation in progress. Original feature documentation was absent; see 32_DECISIONS.md.
+Local MVP implemented and verified on 16 October 2026. GitHub publishing and AWS deployment await external repository/account access and cloud authorization. Original feature documentation was absent; see 32_DECISIONS.md.
 
 Checks and limitations will be recorded with actual execution evidence.
 
@@ -63,3 +63,39 @@ Added reusable PR/manual CI for backend format/lint/tests/PostgreSQL migrations 
 ## Phase 15 — AWS preparation
 
 Added EC2 deployment script with explicit immutable ECR image requirements, instance-role login, Compose migration/startup and readiness verification; prepared OIDC trust/ECR permission templates and optional Caddy TLS edge configuration. Documented operator steps, private service bindings, backups and single-candidate limitations. bash syntax check and missing-image guard test passed. No AWS credentials, repository remote, domain, cloud provisioning or deployment authorization was supplied; no cloud actions were performed.
+
+## Phase 16 — final local verification
+
+| Check actually run | Result |
+| --- | --- |
+| Backend suite in fresh requirements-dev.lock environment | 30 passed; one upstream Starlette/httpx deprecation warning |
+| Python lint and formatting | Passed |
+| Frontend strict TypeScript, ESLint, Prettier | Passed |
+| Vitest / React Testing Library | 5 passed (search/filter/error, official Apply, authenticated Save, access errors, edited profile submission) |
+| Frontend production build | Passed; Vite 8 |
+| npm dependency audit | Zero reported vulnerabilities |
+| PostgreSQL 16 + explicit Alembic migration | Started healthy; upgrade passed; final schema-drift check reported no new operations |
+| API and web Docker builds | Passed; final ingestion fix layered onto the tested local API image after clearing intermediate caches |
+| Running Compose services | PostgreSQL, API, frontend, MLflow, Prometheus and Grafana |
+| Real public ATS ingestion | 1,069 fetched/normalized (729 Greenhouse + 309 Lever + 31 Ashby), 1,061 canonical jobs, all 1,069 source occurrences retained |
+| Repeated live admin ingestion | Succeeded; zero added duplicates; ingestion counters/model identity exposed |
+| Running API smoke workflow | PDF upload/profile extraction; all three rankers without fallback; registered production prediction; idempotent Save; five manual status changes with six history entries; protected TPO/MLOps/admin; metrics |
+| Frontend HTTP serving | All ten requested routes returned HTTP 200 from the built Nginx frontend |
+| Model download/inference | Real all-MiniLM-L6-v2, 384 dimensions; upstream revision pinned in params.yaml |
+| Full DVC workflow | All six stages ran; outputs pushed to local remote; subsequent repro reused unchanged train/evaluate outputs |
+| MLflow registry | Actual production version 3; loaded/predicted through alias; repeated registration reused version 3 |
+| Monitoring | Prometheus target up=1; Grafana health OK; provisioned careerflowops dashboard with 11 panels |
+| CI/deployment files | YAML/JSON parsed; shell syntax passed; missing-image guard tested |
+| Secret check | Generated runtime credentials absent from tracked files; .env ignored |
+
+Final review also verified that historical fixtures cannot overwrite verified live data, and source title/location edits keep canonical identity and application history. Fingerprint collisions with another existing job remain separate for manual review. Temporary smoke-test candidate/resume/application data was deleted; real job data and experiment artifacts remain.
+
+### Verification limits and remaining external steps
+
+- No GitHub repository URL/remote was provided. Local conventional commits exist; no push or hosted GitHub Actions run is claimed.
+- AWS account/role, host, domain and deployment authorization were not provided. ECR/EC2/TLS files are prepared; no cloud resource creation, publishing or deployment was attempted.
+- No interactive browser/visual/responsive screenshot QA was performed. React interaction tests, production builds, and HTTP serving were checked.
+- This is a single-candidate authenticated MVP, with heuristic PDF sections and a known-skill dictionary, no OCR and no automatic closed-job detection. Add real multi-user identity before a shared production launch.
+- Evaluation labels are implementation-agent-authored illustrative judgments for six fictional queries against 29 frozen real jobs, not human-validated or representative production evaluation. Metrics are measured, never fabricated.
+- Recommendations inspect at most 1,000 recent jobs; TPO match/gap/category breakdown uses at most 100 jobs and 500 active profiles. Global headline counts come from persisted records. CLI counters live in a separate process; use admin ingestion for API-scraped ingestion counters.
+- Only task-owned build intermediates/temporary model downloads were removed to recover disk space. Runnable images, databases, DVC artifacts and unrelated project caches were preserved. The machine remains low on free disk; reserve additional capacity before rebuilding large inference images.

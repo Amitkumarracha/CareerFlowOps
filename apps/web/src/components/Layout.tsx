@@ -160,7 +160,11 @@ export function Layout() {
         <footer className="footer">
           CareerFlowOps{" "}
           <span>Discover earlier. Match smarter. Apply better.</span>
-          <a href={`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}/docs`} target="_blank" rel="noreferrer">
+          <a
+            href={`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}/docs`}
+            target="_blank"
+            rel="noreferrer"
+          >
             API docs <ArrowUpRight size={13} />
           </a>
         </footer>

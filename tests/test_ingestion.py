@@ -83,3 +83,41 @@ def test_fixture_never_overwrites_newer_live_occurrence(db: Session, tmp_path) -
     assert occurrence.source_payload_hash == current_hash
     assert occurrence.verification_status == "official_api" and occurrence.verified_at is not None
     assert db.scalars(select(Job.description)).one() == "Updated live description"
+
+
+def test_source_title_edits_preserve_canonical_identity(db: Session, tmp_path) -> None:
+    from apps.api.app.models.entities import JobSource
+    from ingestion.runner import upsert
+
+    config = sources()[0]
+    with httpx.Client() as client:
+        adapter = ADAPTERS[config.name](config, client)
+        original = adapter.parse(
+            adapter.records(json.loads(Path("data/samples/greenhouse.json").read_text()))[0]
+        )
+    source = JobSource(name=config.name, board=config.board)
+    db.add(source)
+    db.flush()
+    upsert(db, original, source, tmp_path, False)
+    identity = db.scalars(select(Job.id)).one()
+    edited = original.model_copy(update={"title": "Updated role title", "location": "Updated city"})
+    upsert(db, edited, source, tmp_path, False)
+    db.commit()
+    job = db.scalars(select(Job)).one()
+    assert (
+        job.id == identity and job.title == "Updated role title" and job.location == "Updated city"
+    )
+    assert job.occurrences[0].job_id == identity
+
+    collision = edited.model_copy(update={"source_job_id": "second", "title": "Taken title"})
+    upsert(db, collision, source, tmp_path, False)
+    upsert(db, edited.model_copy(update={"title": "Taken title"}), source, tmp_path, False)
+    db.commit()
+    assert db.scalar(select(func.count()).select_from(Job)) == 2
+    assert db.get(Job, identity).title == "Taken title"
+    original_occurrence = db.scalar(
+        select(JobSourceOccurrence).where(
+            JobSourceOccurrence.source_job_id == original.source_job_id
+        )
+    )
+    assert original_occurrence.job_id == identity

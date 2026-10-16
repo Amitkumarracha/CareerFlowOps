@@ -6,8 +6,8 @@ setup:
 	python infra/scripts/configure.py
 	python -m venv .venv-tools
 	.venv-tools/bin/pip install uv
-	$(UV) venv --python 3.12 .venv
-	$(UV) pip sync --python .venv/bin/python requirements-dev.lock
+	test -x .venv/bin/python || $(UV) venv --python 3.12 .venv
+	$(UV) pip install --python .venv/bin/python -r requirements-dev.lock
 	cd apps/web && npm ci
 
 ml-setup:

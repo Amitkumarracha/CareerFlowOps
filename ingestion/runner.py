@@ -68,8 +68,11 @@ def upsert(db: Session, item: RawJob, source: JobSource, raw_dir: Path, fixture:
     )
     if fixture and occurrence is not None and occurrence.verification_status == "official_api":
         return False
-    canonical = db.scalar(select(Job).where(Job.fingerprint == fingerprint(item)))
-    duplicate = occurrence is None and canonical is not None
+    matching = db.scalar(select(Job).where(Job.fingerprint == fingerprint(item)))
+    canonical = db.get(Job, occurrence.job_id) if occurrence is not None else matching
+    duplicate = occurrence is None and matching is not None
+    if canonical is not None and (matching is None or matching.id == canonical.id):
+        canonical.fingerprint = fingerprint(item)
     if canonical is None:
         company = db.scalar(select(Company).where(Company.name == normalized(item.company)))
         if company is None:
@@ -84,6 +87,10 @@ def upsert(db: Session, item: RawJob, source: JobSource, raw_dir: Path, fixture:
         )
         db.add(canonical)
         db.flush()
+    # Existing source IDs keep their canonical identity and application history on title edits.
+    # A fingerprint collision with another existing job stays separate for manual review.
+    canonical.title = item.title
+    canonical.location = item.location
     canonical.description = item.description
     canonical.employment_type = (
         item.employment_type.casefold().replace("-", " ") if item.employment_type else None
