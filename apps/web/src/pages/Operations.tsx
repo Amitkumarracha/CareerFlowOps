@@ -115,7 +115,7 @@ export function TpoPage() {
           </div>
           <section className="panel">
             <h2>Potential candidate matches</h2>
-              <p className="fine-print">{data.scope}</p>
+            <p className="fine-print">{data.scope}</p>
             <p className="muted">
               Based on explicit skill overlap. Eligibility may be unknown; these
               counts are not guarantees.

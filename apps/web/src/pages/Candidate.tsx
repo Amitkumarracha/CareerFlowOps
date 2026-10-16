@@ -325,7 +325,7 @@ export function RecommendedPage() {
             onChange={(e) => setAlgorithm(e.target.value)}
           >
             <option value="production">Production model</option>
-              <option value="hybrid">Hybrid, explained</option>
+            <option value="hybrid">Hybrid, explained</option>
             <option value="tfidf">TF-IDF baseline</option>
             <option value="sentence_transformer">SentenceTransformer</option>
           </select>

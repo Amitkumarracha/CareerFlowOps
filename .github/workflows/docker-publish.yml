@@ -1,0 +1,63 @@
+name: Docker build and optional ECR publish
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+  build:
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+      API_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY || 'careerflowops-api' }}
+      WEB_REPOSITORY: ${{ vars.AWS_ECR_WEB_REPOSITORY || 'careerflowops-web' }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/api.Dockerfile
+          load: true
+          tags: careerflowops-api:${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/web.Dockerfile
+          load: true
+          tags: careerflowops-web:${{ github.sha }}
+          build-args: VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL || 'http://localhost:8000' }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+      - name: Obtain short-lived AWS credentials
+        if: env.AWS_ROLE_ARN != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Log in to ECR
+        if: env.AWS_ROLE_ARN != ''
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Publish immutable SHA tags
+        if: env.AWS_ROLE_ARN != ''
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_SHA: ${{ github.sha }}
+        run: |
+          docker tag "careerflowops-api:$IMAGE_SHA" "$REGISTRY/$API_REPOSITORY:$IMAGE_SHA"
+          docker tag "careerflowops-web:$IMAGE_SHA" "$REGISTRY/$WEB_REPOSITORY:$IMAGE_SHA"
+          docker push "$REGISTRY/$API_REPOSITORY:$IMAGE_SHA"
+          docker push "$REGISTRY/$WEB_REPOSITORY:$IMAGE_SHA"

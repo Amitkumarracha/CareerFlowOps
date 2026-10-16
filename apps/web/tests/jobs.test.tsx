@@ -74,13 +74,11 @@ describe("job discovery", () => {
   it("shows failed requests without fake job cards", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(JSON.stringify({ detail: "Source unavailable" }), {
-            status: 503,
-          }),
-        ),
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ detail: "Source unavailable" }), {
+          status: 503,
+        }),
+      ),
     );
     render(wrapper(<JobsPage />));
     expect(await screen.findByRole("alert")).toHaveTextContent(
