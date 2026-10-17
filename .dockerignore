@@ -16,3 +16,4 @@ ml/artifacts
 mlflow-data
 *.db
 .venv-tools
+ops-private

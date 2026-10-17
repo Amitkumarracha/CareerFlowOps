@@ -79,6 +79,8 @@ The template uses Docker network service names `postgres` and `mlflow`. When run
 
 See `README.md` for executable setup commands and `docs/IMPLEMENTATION_STATUS.md` for current verification evidence. Numbered feature documents were reconstructed from the supplied brief because the originals were absent; see `docs/32_DECISIONS.md`.
 
+For the complete remaining stages, current progress, Git/DVC commands, AWS deployment, assessment evidence and future feature priorities, follow [docs/remaining/README.md](docs/remaining/README.md).
+
 ## Read next
 1. `docs/01_PROJECT_CHARTER.md`
 2. `docs/02_PRODUCT_REQUIREMENTS.md`

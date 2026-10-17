@@ -1,5 +1,7 @@
 # Implementation status
 
+For the current consolidated status and remaining execution order, see [remaining-process index](remaining/README.md) and [overall progress](remaining/01_OVERALL_PROGRESS.md), reviewed on 17 October 2026. The sections below retain chronological implementation evidence; older statements about absent repository access or browser QA are superseded by later updates.
+
 Local MVP implemented and verified on 16 October 2026. GitHub publishing and AWS deployment await external repository/account access and cloud authorization. Original feature documentation was absent; see 32_DECISIONS.md.
 
 Checks and limitations will be recorded with actual execution evidence.
@@ -120,3 +122,11 @@ See UI_FEATURE_GUIDE.md for pages, run commands and scope, and ../infra/aws/READ
 ### Publishing outcome
 
 Implementation is committed locally as `9596657`. Pushing `main` to the supplied origin was attempted and failed because HTTPS GitHub authentication is not configured (`could not read Username`, terminal prompts disabled). No remote changes or hosted Actions execution are claimed. Authenticate locally and run `git push -u origin main`; all implementation commits are ready to publish.
+
+## Remaining-process documentation review — 17 October 2026
+
+Added six coordinated Markdown guides under `docs/remaining/`: execution order, consolidated progress, Git/DVC releases, full AWS setup/deployment, operations/assessment/recovery and prioritized feature improvements. Root documentation and the former AWS preparation page link to this single runbook set. Private operator backups under `ops-private/` are excluded from both Git and Docker build contexts.
+
+Read-only checks found the local services running, API health/readiness returning HTTP 200, 1,061 canonical jobs, existing selected-model/bundle artifacts and approximately 2.1 GB free disk. Development readiness remains distinct from verified EC2 model readiness. `aws`/`gh` were absent from PATH and origin inspection returned no refs. These are review-time observations, not seed/demo numbers.
+
+Documentation validation checked 68 shell code blocks, six embedded Python examples and 43 relative links/anchors across the new/connected guides; all passed syntax/link checks. AWS/GitHub/Docker/PostgreSQL/DVC command details were checked against primary documentation where needed. Deployment, provisioning, backup/restore, profile-writing and restart examples were not executed. Application tests were not rerun for this documentation-only update; prior implementation verification remains recorded above. No AWS action or new product feature implementation is claimed.

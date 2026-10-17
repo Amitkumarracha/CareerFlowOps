@@ -4,6 +4,10 @@
 
 Official job discovery, explainable resume-aware matching, manual application tracking and aggregate TPO analytics. React/Vite/strict TypeScript/Tailwind + FastAPI/Pydantic/SQLAlchemy + PostgreSQL/Alembic, with DVC, MLflow, Prometheus and Grafana.
 
+## Remaining work and complete deployment instructions
+
+Start with [the remaining-process guide](docs/remaining/README.md). It links the current progress report, all Git/DVC release commands, AWS provisioning/deployment commands, operations/assessment checks and a prioritized feature roadmap. The local MVP is implemented; hosted CI, S3/ECR publishing and EC2 execution still need operator setup and evidence.
+
 ## Run locally
 
 Prerequisites: Python 3.12 (setup can download it through uv), Node 22.18+ and Docker Compose. Allow at least 10 GB free disk for development environments, CPU ML dependencies and initial image build caches.
