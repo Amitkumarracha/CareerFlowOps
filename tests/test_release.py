@@ -88,6 +88,33 @@ def test_ci_deploy_requires_published_images_and_explicit_configuration() -> Non
     assert job["concurrency"]["cancel-in-progress"] == "false"
 
 
+def test_ssm_cli_reports_aws_authentication_errors(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "ssm_deploy",
+            "--sha",
+            "a" * 40,
+            "--instance",
+            "i-0123456789abcdef0",
+            "--region",
+            "ap-south-1",
+            "--remote",
+            "s3://test/project",
+        ],
+    )
+
+    def denied(args):
+        raise subprocess.CalledProcessError(1, args, stderr="AccessDenied: role is not authorized")
+
+    monkeypatch.setattr(ssm_deploy, "aws", denied)
+    with pytest.raises(SystemExit) as failure:
+        ssm_deploy.main()
+    assert failure.value.code == 1
+    assert "AccessDenied" in capsys.readouterr().err
+
+
 def test_ssm_payload_preserves_owner_and_checks_revision_before_stopping_services() -> None:
     payload = ssm_deploy.parameters(
         "a" * 40,

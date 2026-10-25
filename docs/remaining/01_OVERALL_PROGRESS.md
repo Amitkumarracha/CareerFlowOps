@@ -1,25 +1,25 @@
 # Overall progress, requirements and known gaps
 
-Reviewed: **17 October 2026**. This is an evidence-based status report, not a completion percentage. The historical implementation log remains in [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md).
+Reviewed: **25 October 2026**. This is an evidence-based status report, not a completion percentage. The historical implementation log remains in [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md). Repeatable commands are in [the terminal presentation guide](../PRESENTATION.md).
 
 ## Current result
 
-The local application and MLOps release path are implemented and tested. GitHub authentication, hosted workflow success and AWS deployment have not been demonstrated. The latest recorded push failed because HTTPS authentication was missing. Read-only origin inspection during this review returned no refs.
+The application and MLOps release path are implemented and tested. GitHub authentication and the first repository synchronization succeeded on 25 October. A real hosted workflow passed backend/frontend checks and built both images. AWS resources/credentials are still unconfigured, so ECR publication, S3 remote execution and EC2 deployment have not been demonstrated. Their workflow steps remain explicitly disabled/skipped until configuration exists.
 
 Current runtime checks during this review:
 
 | Check | Observed result |
 | --- | --- |
 | API health and readiness | HTTP 200 at port 8000 |
-| Local jobs endpoint | 1,061 canonical jobs at review time; this count changes with ingestion |
+| Local jobs endpoint | 1,144 canonical records after the 25 October refresh; historical records remain until a future verified-expiry feature |
 | Docker services | API, web, PostgreSQL, MLflow, Prometheus and Grafana running |
-| Current readiness mode | Development: model fields are null; this is not an EC2/bundle-mode verification |
-| Selected model artifact | TF-IDF, `b3e854956e87-fbb63052` |
-| Saved MLflow registry metadata | `careerflowops-ranker@production`, version 3 |
+| Current readiness mode | Verified bundle mode locally; still not proof of EC2 hosting |
+| Selected model artifact | TF-IDF, `b3e854956e87-574536b6` |
+| Saved MLflow registry metadata | `careerflowops-ranker@production`, version 4 |
 | Exported DVC production bundle | Present locally |
-| Git implementation commits | `9596657` and follow-up documentation commit `12e8473`; subsequent documentation commits may follow |
-| Workstation prerequisites missing | `aws` and `gh` were not on PATH during review |
-| Available disk | About 2.1 GB at review time; insufficient headroom for a clean full ML image rebuild |
+| Git implementation commits | Training source checkpoint `574536b`; published model pointer `60ea401`; use `git rev-parse HEAD` for the latest release |
+| Workstation prerequisites | Authenticated GitHub CLI is in `.venv-tools/bin/gh`; AWS CLI/account configuration remains outstanding |
+| Available disk | Disk headroom was restored before this run; a full clean API/web Docker build succeeded |
 
 Do not delete project databases, volumes, artifacts or unrelated caches to free space. Choose storage deliberately before large builds. Image publishing can run on a GitHub-hosted runner once access is configured.
 
@@ -38,14 +38,14 @@ Do not delete project databases, volumes, artifacts or unrelated caches to free 
 | MLflow | Actual experiment runs, metrics/artifacts, model versions and production alias | Local backend/artifacts are not automatically replicated to a new EC2 host |
 | DVC | Seven stages and a self-contained selected-model bundle, local push and fresh isolated pull verified | Production S3 remote must be configured and populated |
 | Production serving | File/inference compatibility validation, prediction probe, fail-closed bundle inference, readiness identity | Must execute the EC2 deployment and verify the downloaded release there |
-| Containers | API/web images, Compose, migrations, persistence and restart policies | Latest local update reused installed runtime layers due disk limits |
-| CI/CD | GitHub checks, SHA-tagged builds and optional OIDC ECR publishing | Hosted execution unverified; EC2 promotion is operator-driven |
+| Containers | Clean API/web image builds, Compose, migrations, persistence and restart policies | Cloud images still need the configured ECR account |
+| CI/CD | Hosted checks/build passed; SHA-tagged builds, optional OIDC ECR publishing and configured SSM deployment | AWS execution remains unverified and disabled until roles/host exist |
 | Monitoring | Prometheus metrics, structured HTTP logs and provisioned Grafana dashboard | No alert notifications, automated SLO enforcement or ML drift pipeline |
 | Access/privacy | Separate candidate/admin bearer tokens, private candidate endpoints and cache clearing on disconnect | Candidate token identifies one candidate; not a multi-user platform |
 
 ## Verification already performed
 
-The previous implementation turn actually ran:
+Before the 25 October completion, the recorded verification included:
 
 - 44 backend tests in the base dependency environment; one upstream Starlette/httpx deprecation warning.
 - 13 frontend tests, strict TypeScript, ESLint, Prettier, Ruff and a Vite production build.
@@ -54,7 +54,9 @@ The previous implementation turn actually ran:
 - Actual model export, local DVC push, fresh isolated DVC pull, bundle inference, API readiness/prediction and validation inside the API image.
 - Fake-tool deployment tests: invalid models prevent service startup. These test the deployment control flow; they do not substitute for real AWS execution.
 
-This documentation update rechecked local runtime and saved artifact identity. It did not rerun the entire test suite or provision AWS. Use [the commands guide](02_GIT_DVC_RELEASE.md) for repeatable checks.
+The earlier documentation-only update did not rerun application tests. The 25 October execution below supersedes that limitation; no AWS resources were provisioned. Use [the commands guide](02_GIT_DVC_RELEASE.md) for repeatable checks.
+
+The 25 October completion additionally passed 63 backend and 13 frontend tests, reran the full DVC pipeline, created three new measured MLflow runs and production version 4, validated a fresh DVC pull and explained inference against the running bundle, completed clean Docker builds and refreshed real ATS data (1,062 fetched; 719 Greenhouse, 309 Lever, 34 Ashby; no source errors). Hosted run [40156338814](https://github.com/Amitkumarracha/CareerFlowOps/actions/runs/40156338814) passed checks and Docker builds; AWS-dependent steps were skipped. Future release results should be checked directly in Actions rather than assumed from this snapshot.
 
 ## Model quality: what the evidence means
 
@@ -83,12 +85,13 @@ No OpenAI/LLM API key, paid job API, Kubernetes or GPU is required for the prese
 
 ## Remaining stages for assessment
 
-- [ ] Authenticate GitHub and push the local repository.
+- [x] Authenticate GitHub and push the local repository.
 - [ ] Configure AWS account access and inspect costs/quotas for the chosen resources.
 - [ ] Create/reuse private S3 storage, two ECR repositories, GitHub OIDC publishing role and EC2 read role/profile.
 - [ ] Upload the DVC release to S3 and verify a fresh model-only pull.
 - [ ] Configure the frontend origin and GitHub role/variables.
-- [ ] Obtain a successful hosted CI/build/publish run; verify both ECR tags match one full Git SHA.
+- [x] Obtain a successful hosted CI and Docker build run.
+- [ ] Configure ECR publishing and verify both ECR tags match one full Git SHA.
 - [ ] Provision/install EC2 and deploy that SHA with the matching DVC bundle.
 - [ ] Verify bundle identity and a real explained recommendation on EC2.
 - [ ] Demonstrate private tunnel access or public HTTPS.

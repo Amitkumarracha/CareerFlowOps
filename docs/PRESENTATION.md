@@ -45,6 +45,8 @@ make present
 
 `make serve-release` uses the production model overlay with locally built images. It does not create AWS resources. `/ready` must include a non-null bundle ID and model version.
 
+It recreates the API process even when the image/configuration did not change, because bundle validation and loaded model state are cached per process. Run it after each new local model promotion.
+
 `make present` shows image versions and the DVC graph/status, checks the actual MLflow alias/runs, creates a fresh isolated DVC workspace, pulls the selected bundle, validates its files/code compatibility and runs an explained prediction against real jobs. Its fictional profile exists only in memory. It refuses to claim success if the running API bundle differs from the pulled release. Actual evidence is saved to ignored `ops-private/evidence/presentation.json`.
 
 This default presentation uses the local `storage` remote. After S3 setup:

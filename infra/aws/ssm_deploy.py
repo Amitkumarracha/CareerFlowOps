@@ -138,9 +138,13 @@ def main() -> None:
     parser.add_argument("--directory", default="/home/ubuntu/CareerFlowOps")
     parser.add_argument("--user", default="ubuntu")
     args = parser.parse_args()
-    account = aws(["sts", "get-caller-identity", "--region", args.region])["Account"]
-    payload = parameters(args.sha, account, args.region, args.remote, args.directory, args.user)
-    deploy(args.instance, payload, args.region)
+    try:
+        account = aws(["sts", "get-caller-identity", "--region", args.region])["Account"]
+        payload = parameters(args.sha, account, args.region, args.remote, args.directory, args.user)
+        deploy(args.instance, payload, args.region)
+    except (subprocess.CalledProcessError, ValueError, RuntimeError, TimeoutError) as exc:
+        reason = exc.stderr if isinstance(exc, subprocess.CalledProcessError) else str(exc)
+        parser.exit(1, f"Deployment stopped: {reason}\n")
 
 
 if __name__ == "__main__":

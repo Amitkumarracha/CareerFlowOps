@@ -1,5 +1,7 @@
 # CareerFlowOps
 
+[![CI and Docker build](https://github.com/Amitkumarracha/CareerFlowOps/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Amitkumarracha/CareerFlowOps/actions/workflows/docker-publish.yml)
+
 **Discover earlier. Match smarter. Apply better.**
 
 Official job discovery, explainable resume-aware matching, manual application tracking and aggregate TPO analytics. React/Vite/strict TypeScript/Tailwind + FastAPI/Pydantic/SQLAlchemy + PostgreSQL/Alembic, with DVC, MLflow, Prometheus and Grafana.

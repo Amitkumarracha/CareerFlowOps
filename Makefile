@@ -7,6 +7,7 @@ DVC_REMOTE ?= storage
 serve-release:
 	$(PYTHON) -m pipelines.export_model --validate ml/artifacts/production
 	$(DOCKER) compose -f docker-compose.yml -f infra/aws/compose.production.yml --profile monitoring up -d --no-build --wait --wait-timeout 240
+	$(DOCKER) compose -f docker-compose.yml -f infra/aws/compose.production.yml up -d --no-build --no-deps --force-recreate --wait --wait-timeout 240 api
 
 status:
 	$(PYTHON) -m infra.scripts.project status

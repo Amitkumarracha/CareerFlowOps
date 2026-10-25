@@ -206,7 +206,8 @@ def sync(remote: str) -> None:
         )
     command(["git", "push", "-u", "origin", "main"])
     print("Synchronized release " + git("rev-parse", "HEAD"))
-    print("GitHub Actions now checks/builds it; configured AWS jobs publish/deploy it.")
+    print("Newly pushed commits trigger GitHub checks/builds and configured AWS delivery.")
+    print("An unchanged release does not create a duplicate GitHub run.")
 
 
 def main() -> None:
