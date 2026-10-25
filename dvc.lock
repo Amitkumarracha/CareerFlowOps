@@ -105,9 +105,9 @@ stages:
       nfiles: 4
     - path: ml/inference
       hash: md5
-      md5: 9b13eee7b694192c905897174e31f015.dir
-      size: 21368
-      nfiles: 4
+      md5: 5c3702bae9f9d08ff4f805949e246b59.dir
+      size: 34493
+      nfiles: 6
     - path: pipelines/common.py
       hash: md5
       md5: 62e41e4bf0dcd68a085852d156ad4266
@@ -140,11 +140,11 @@ stages:
       nfiles: 9
     - path: ml/artifacts/tfidf.joblib
       hash: md5
-      md5: 549356867eb77cc62217c87dbe70bd2d
+      md5: 683fd1001a7a81fcbf26c0300c59936b
       size: 240726
     - path: ml/artifacts/training.json
       hash: md5
-      md5: 87777c2195baa513a192991e2e485d3c
+      md5: 8386c6f3963ed20aed73bda4c9ec76af
       size: 858
   evaluate:
     cmd: python -m pipelines.evaluate
@@ -160,11 +160,11 @@ stages:
       nfiles: 9
     - path: ml/artifacts/tfidf.joblib
       hash: md5
-      md5: 549356867eb77cc62217c87dbe70bd2d
+      md5: 683fd1001a7a81fcbf26c0300c59936b
       size: 240726
     - path: ml/artifacts/training.json
       hash: md5
-      md5: 87777c2195baa513a192991e2e485d3c
+      md5: 8386c6f3963ed20aed73bda4c9ec76af
       size: 858
     - path: ml/evaluate
       hash: md5
@@ -173,9 +173,9 @@ stages:
       nfiles: 4
     - path: ml/inference
       hash: md5
-      md5: 9b13eee7b694192c905897174e31f015.dir
-      size: 21368
-      nfiles: 4
+      md5: 5c3702bae9f9d08ff4f805949e246b59.dir
+      size: 34493
+      nfiles: 6
     - path: pipelines/common.py
       hash: md5
       md5: 62e41e4bf0dcd68a085852d156ad4266
@@ -187,15 +187,15 @@ stages:
     outs:
     - path: ml/artifacts/evaluation.json
       hash: md5
-      md5: 8f3d0f29e410b150ca39d26cc8f2a8d5
-      size: 5133
+      md5: 7d3f848cca3b1887a5bb8b4155eb98ca
+      size: 5132
   register:
     cmd: python infra/scripts/host.py python -m pipelines.register
     deps:
     - path: ml/artifacts/evaluation.json
       hash: md5
-      md5: 8f3d0f29e410b150ca39d26cc8f2a8d5
-      size: 5133
+      md5: 7d3f848cca3b1887a5bb8b4155eb98ca
+      size: 5132
     - path: ml/artifacts/sentence-transformer
       hash: md5
       md5: dafaaef3be7669137d713c49ba048b61.dir
@@ -203,11 +203,11 @@ stages:
       nfiles: 9
     - path: ml/artifacts/tfidf.joblib
       hash: md5
-      md5: 549356867eb77cc62217c87dbe70bd2d
+      md5: 683fd1001a7a81fcbf26c0300c59936b
       size: 240726
     - path: ml/artifacts/training.json
       hash: md5
-      md5: 87777c2195baa513a192991e2e485d3c
+      md5: 8386c6f3963ed20aed73bda4c9ec76af
       size: 858
     - path: ml/registry
       hash: md5
@@ -221,26 +221,26 @@ stages:
     outs:
     - path: ml/artifacts/model.json
       hash: md5
-      md5: a3e89ec049df2976ada8fffa3785b261
+      md5: 9b4e9a1b7e092dd58bc46faa19be461a
       size: 198
     - path: ml/artifacts/registry.json
       hash: md5
-      md5: 4e71018d6c558364d1a410635caa4d85
+      md5: 1001159b17de62ace10c0b2dc288ad12
       size: 280
   export_model:
     cmd: python -m pipelines.export_model
     deps:
     - path: ml/artifacts/evaluation.json
       hash: md5
-      md5: 8f3d0f29e410b150ca39d26cc8f2a8d5
-      size: 5133
+      md5: 7d3f848cca3b1887a5bb8b4155eb98ca
+      size: 5132
     - path: ml/artifacts/model.json
       hash: md5
-      md5: a3e89ec049df2976ada8fffa3785b261
+      md5: 9b4e9a1b7e092dd58bc46faa19be461a
       size: 198
     - path: ml/artifacts/registry.json
       hash: md5
-      md5: 4e71018d6c558364d1a410635caa4d85
+      md5: 1001159b17de62ace10c0b2dc288ad12
       size: 280
     - path: ml/artifacts/sentence-transformer
       hash: md5
@@ -249,11 +249,11 @@ stages:
       nfiles: 9
     - path: ml/artifacts/tfidf.joblib
       hash: md5
-      md5: 549356867eb77cc62217c87dbe70bd2d
+      md5: 683fd1001a7a81fcbf26c0300c59936b
       size: 240726
     - path: ml/artifacts/training.json
       hash: md5
-      md5: 87777c2195baa513a192991e2e485d3c
+      md5: 8386c6f3963ed20aed73bda4c9ec76af
       size: 858
     - path: ml/features/skills.py
       hash: md5
@@ -279,6 +279,6 @@ stages:
     outs:
     - path: ml/artifacts/production
       hash: md5
-      md5: ff6e5887b845efc9a8dcf0af4eea2015.dir
-      size: 247992
+      md5: 04eb8423c82de71e417cea1cdf67de2f.dir
+      size: 247991
       nfiles: 6
