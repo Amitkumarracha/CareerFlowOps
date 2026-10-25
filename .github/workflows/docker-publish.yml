@@ -1,4 +1,4 @@
-name: Docker build and optional ECR publish
+name: CI, Docker publish and optional EC2 deployment
 on:
   push:
     branches: [main]
@@ -11,6 +11,8 @@ jobs:
   build:
     needs: checks
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.publish.outputs.published }}
     permissions:
       contents: read
       id-token: write
@@ -29,6 +31,7 @@ jobs:
           file: infra/docker/api.Dockerfile
           load: true
           tags: careerflowops-api:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha,scope=api
           cache-to: type=gha,mode=max,scope=api
       - name: Build web image
@@ -38,6 +41,7 @@ jobs:
           file: infra/docker/web.Dockerfile
           load: true
           tags: careerflowops-web:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           build-args: VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL || 'http://localhost:8000' }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
@@ -52,6 +56,7 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
       - name: Publish immutable SHA tags
+        id: publish
         if: env.AWS_ROLE_ARN != ''
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
@@ -61,3 +66,33 @@ jobs:
           docker tag "careerflowops-web:$IMAGE_SHA" "$REGISTRY/$WEB_REPOSITORY:$IMAGE_SHA"
           docker push "$REGISTRY/$API_REPOSITORY:$IMAGE_SHA"
           docker push "$REGISTRY/$WEB_REPOSITORY:$IMAGE_SHA"
+          echo "published=true" >> "$GITHUB_OUTPUT"
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && needs.build.outputs.published == 'true' && vars.AUTO_DEPLOY == 'true' && vars.EC2_INSTANCE_ID != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: careerflowops-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+      EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+      DVC_REMOTE_URL: ${{ vars.DVC_REMOTE_URL }}
+      EC2_PROJECT_DIR: ${{ vars.EC2_PROJECT_DIR || '/home/ubuntu/CareerFlowOps' }}
+      EC2_DEPLOY_USER: ${{ vars.EC2_DEPLOY_USER || 'ubuntu' }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Obtain deployment credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Deploy matching image and DVC model through SSM
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          python3 infra/aws/ssm_deploy.py --sha "$RELEASE_SHA" --instance "$EC2_INSTANCE_ID" --region "$AWS_REGION" --remote "$DVC_REMOTE_URL" --directory "$EC2_PROJECT_DIR" --user "$EC2_DEPLOY_USER"

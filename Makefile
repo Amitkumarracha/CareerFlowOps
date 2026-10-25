@@ -1,7 +1,24 @@
 PYTHON := .venv/bin/python
 UV := .venv-tools/bin/uv
 DOCKER ?= docker
-.PHONY: setup ml-setup cloud-setup export-model dev test lint format db-migrate ingest train evaluate reproduce monitoring
+DVC_REMOTE ?= storage
+.PHONY: setup ml-setup cloud-setup export-model dev test lint format db-migrate ingest train evaluate reproduce monitoring status present sync release serve-release
+
+serve-release:
+	$(PYTHON) -m pipelines.export_model --validate ml/artifacts/production
+	$(DOCKER) compose -f docker-compose.yml -f infra/aws/compose.production.yml --profile monitoring up -d --no-build --wait --wait-timeout 240
+
+status:
+	$(PYTHON) -m infra.scripts.project status
+
+present:
+	$(PYTHON) infra/scripts/host.py $(PYTHON) -m infra.scripts.project present --remote $(DVC_REMOTE)
+
+sync:
+	$(PYTHON) -m infra.scripts.project sync --remote $(DVC_REMOTE)
+
+release:
+	$(PYTHON) -m infra.scripts.project release --remote $(DVC_REMOTE)
 setup:
 	python infra/scripts/configure.py
 	python -m venv .venv-tools

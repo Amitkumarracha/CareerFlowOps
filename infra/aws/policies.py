@@ -84,6 +84,27 @@ def render(account: str, region: str, bucket: str, output: Path) -> None:
                 },
             ]
         },
+        "github-deploy.json": {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "ssm:SendCommand",
+                    "Resource": f"arn:aws:ssm:{region}::document/AWS-RunShellScript",
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": "ssm:SendCommand",
+                    "Resource": f"arn:aws:ec2:{region}:{account}:instance/*",
+                    "Condition": {"StringEquals": {"ssm:resourceTag/Name": "CareerFlowOps"}},
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": "ssm:GetCommandInvocation",
+                    "Resource": "*",
+                    "Condition": {"StringEquals": {"aws:RequestedRegion": region}},
+                },
+            ]
+        },
     }
     for name, document in documents.items():
         document["Version"] = "2012-10-17"
