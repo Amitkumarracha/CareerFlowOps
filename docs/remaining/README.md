@@ -1,6 +1,8 @@
 # CareerFlowOps: remaining work and execution order
 
-Reviewed: **17 October 2026**. Repository: `Amitkumarracha/CareerFlowOps`.
+Reviewed: **25 October 2026**. Repository: `Amitkumarracha/CareerFlowOps`.
+
+For the new repeatable terminal commands and automatic release path, start with [the presentation guide](../PRESENTATION.md). [Automatic EC2 deployment](../AUTOMATIC_DEPLOYMENT.md) is now implemented behind explicit repository configuration; AWS execution still requires your account/host setup.
 
 The local single-candidate MVP is implemented. The remaining assessment-critical work is publishing the repository, running hosted CI, moving DVC artifacts to S3, publishing images to ECR, deploying the matching release to EC2, and collecting evidence. Cloud configuration files alone do not prove a cloud deployment.
 

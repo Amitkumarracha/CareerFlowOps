@@ -4,6 +4,20 @@
 
 Official job discovery, explainable resume-aware matching, manual application tracking and aggregate TPO analytics. React/Vite/strict TypeScript/Tailwind + FastAPI/Pydantic/SQLAlchemy + PostgreSQL/Alembic, with DVC, MLflow, Prometheus and Grafana.
 
+## Terminal presentation and release automation
+
+Follow [the presentation guide](docs/PRESENTATION.md) to demonstrate both supplied diagrams with actual commands and model versions:
+
+```sh
+export DOCKER_HOST=unix:///var/run/docker.sock
+make status
+make reproduce
+make serve-release
+make present
+```
+
+`make sync` uploads DVC objects before committing a changed model pointer and pushing main. `make release DVC_REMOTE=production` also runs checks, builds the frontend and reproduces the model pipeline before synchronization. Source changes must already be reviewed/committed; arbitrary files and secrets are never auto-staged. GitHub then checks/builds/publishes the pushed SHA. [Optional automatic EC2 deployment through SSM](docs/AUTOMATIC_DEPLOYMENT.md) is available after the account and host are configured.
+
 ## Remaining work and complete deployment instructions
 
 Start with [the remaining-process guide](docs/remaining/README.md). It links the current progress report, all Git/DVC release commands, AWS provisioning/deployment commands, operations/assessment checks and a prioritized feature roadmap. The local MVP is implemented; hosted CI, S3/ECR publishing and EC2 execution still need operator setup and evidence.
