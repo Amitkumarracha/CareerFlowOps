@@ -69,7 +69,7 @@ def aws(arguments: list[str]) -> dict:
     return json.loads(result.stdout)
 
 
-def deploy(instance: str, payload: dict) -> None:
+def deploy(instance: str, payload: dict, region: str) -> None:
     if not re.fullmatch(r"i-[a-f0-9]{8,17}", instance):
         raise ValueError("Invalid EC2 instance ID")
     with tempfile.TemporaryDirectory(prefix="careerflowops-ssm-") as temporary:
@@ -79,6 +79,8 @@ def deploy(instance: str, payload: dict) -> None:
             [
                 "ssm",
                 "send-command",
+                "--region",
+                region,
                 "--instance-ids",
                 instance,
                 "--document-name",
@@ -100,6 +102,8 @@ def deploy(instance: str, payload: dict) -> None:
                 [
                     "ssm",
                     "get-command-invocation",
+                    "--region",
+                    region,
                     "--command-id",
                     command_id,
                     "--instance-id",
@@ -134,9 +138,9 @@ def main() -> None:
     parser.add_argument("--directory", default="/home/ubuntu/CareerFlowOps")
     parser.add_argument("--user", default="ubuntu")
     args = parser.parse_args()
-    account = aws(["sts", "get-caller-identity"])["Account"]
+    account = aws(["sts", "get-caller-identity", "--region", args.region])["Account"]
     payload = parameters(args.sha, account, args.region, args.remote, args.directory, args.user)
-    deploy(args.instance, payload)
+    deploy(args.instance, payload, args.region)
 
 
 if __name__ == "__main__":

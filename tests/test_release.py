@@ -145,8 +145,9 @@ def test_ssm_waiter_reports_real_terminal_result(state, monkeypatch) -> None:
 
     monkeypatch.setattr(ssm_deploy, "aws", aws)
     if state == "Success":
-        ssm_deploy.deploy("i-0123456789abcdef0", {"commands": ["true"]})
+        ssm_deploy.deploy("i-0123456789abcdef0", {"commands": ["true"]}, "ap-south-1")
     else:
         with pytest.raises(RuntimeError, match=state):
-            ssm_deploy.deploy("i-0123456789abcdef0", {"commands": ["true"]})
+            ssm_deploy.deploy("i-0123456789abcdef0", {"commands": ["true"]}, "ap-south-1")
     assert len(calls) == 2
+    assert all(call[call.index("--region") + 1] == "ap-south-1" for call in calls)
