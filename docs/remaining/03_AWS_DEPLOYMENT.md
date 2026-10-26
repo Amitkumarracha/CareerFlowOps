@@ -19,6 +19,19 @@ EC2, disks, public IPv4, image storage and S3 may incur charges. Check your acco
 
 ## 2. Workstation AWS access
 
+Workstation update, 26 October 2026: AWS CLI **2.38.5** was installed for the current user at `~/.local/bin/aws`, with package PGP signature and AWS signing-key fingerprint verified. The user-selected local profile `Amit_devil` now has region `ap-south-1` and JSON output configured, but has **not authenticated**. Installation and local profile configuration created no AWS resources. Add `~/.local/bin` to this terminal's PATH before continuing.
+
+If you sign in through the normal AWS console with an IAM/federated identity, use the [official browser-based local login](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html):
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+export AWS_PROFILE=Amit_devil
+aws login --profile "$AWS_PROFILE"
+aws sts get-caller-identity --profile "$AWS_PROFILE"
+```
+
+Complete the browser sign-in yourself. The IAM identity needs AWS's `SignInLocalDevelopmentAccess` permission for this flow; it does not grant deployment permissions. For an IAM Identity Center account, use the SSO flow below instead. Do not paste authorization codes or credentials into chat. The installation block below remains for a new workstation; skip it on this one.
+
 WORKSTATION — AWS CLI v2 is required. If absent on your x86-64 Arch workstation, use the official installer in a temporary directory:
 
 ```bash
@@ -36,7 +49,7 @@ If already installed, inspect its version instead of reinstalling; an update use
 Prefer an existing SSO profile. If your organization/account uses IAM Identity Center:
 
 ```bash
-export AWS_PROFILE=careerflowops
+export AWS_PROFILE=Amit_devil
 aws configure sso --profile "$AWS_PROFILE"
 aws sso login --profile "$AWS_PROFILE"
 export AWS_REGION=ap-south-1

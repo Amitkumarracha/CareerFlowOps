@@ -20,7 +20,7 @@ Current runtime checks during this review:
 | Saved MLflow registry metadata | `careerflowops-ranker@production`, version 4 |
 | Exported DVC production bundle | Present locally |
 | Git implementation commits | Training source checkpoint `574536b`; published model pointer `60ea401`; use `git rev-parse HEAD` for the latest release |
-| Workstation prerequisites | Authenticated GitHub CLI is in `.venv-tools/bin/gh`; AWS CLI/account configuration remains outstanding |
+| Workstation prerequisites | GitHub authenticated; AWS CLI 2.38.5 installed in `~/.local/bin`; local `Amit_devil` profile configured, AWS login/account access pending |
 | Available disk | Disk headroom was restored before this run; a full clean API/web Docker build succeeded |
 
 Do not delete project databases, volumes, artifacts or unrelated caches to free space. Choose storage deliberately before large builds. Image publishing can run on a GitHub-hosted runner once access is configured.

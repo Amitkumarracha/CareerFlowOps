@@ -125,7 +125,7 @@ View rules through a private tunnel in Prometheus at `/rules`. Alert rules are n
 | Input | Current state | Required action |
 | --- | --- | --- |
 | GitHub access | Account authenticated; repository synchronization works | Existing access can be reused |
-| AWS CLI/profile | CLI absent, no configured AWS profile found | Install official AWS CLI v2 and sign in locally |
+| AWS CLI/profile | CLI 2.38.5 installed with signature verification; `Amit_devil` profile has region/output configured | Complete AWS login locally, then verify STS identity |
 | AWS region | Repository default `ap-south-1` | Confirm this region |
 | Spending limit | Not provided | Set a monthly budget before provisioning EC2/storage |
 | Deployment audience | Not selected | Choose private assessment demo or real shared service |
@@ -152,7 +152,8 @@ Operator notification destination:
 Do not paste access keys, passwords, SSH private keys or raw login tokens. Configure credentials on the workstation. For an existing IAM Identity Center account, [AWS documents the local SSO flow](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html):
 
 ```bash
-export AWS_PROFILE=careerflowops
+export PATH="$HOME/.local/bin:$PATH"
+export AWS_PROFILE=Amit_devil
 export AWS_REGION=ap-south-1
 aws configure sso --profile "$AWS_PROFILE"
 aws sso login --profile "$AWS_PROFILE"
@@ -160,6 +161,8 @@ aws sts get-caller-identity --profile "$AWS_PROFILE"
 ```
 
 Use your existing authorized profile instead if the account does not use IAM Identity Center. Once access and scope exist: create/reuse S3/ECR/IAM, push the DVC model, publish both SHA images, deploy to EC2, configure tunnel/HTTPS, run application/restore/notification checks, then enable the optional automatic deployment. Follow [the ordered remaining stages](README.md) and [automatic deployment](../AUTOMATIC_DEPLOYMENT.md).
+
+For a normal IAM/federated AWS console account, `aws login --profile Amit_devil` provides a browser sign-in alternative to SSO. Its permissions and the remaining account setup are described in [AWS access](03_AWS_DEPLOYMENT.md#2-workstation-aws-access). Only local CLI installation/profile defaults were completed; AWS authentication is still pending.
 
 The shared-user service is **not complete** while all candidates still map to `local-candidate`. Do not share the demonstration token among students. No S3 upload, ECR publication or EC2 deployment has been executed in this handover.
 
