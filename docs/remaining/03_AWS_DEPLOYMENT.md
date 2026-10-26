@@ -1,5 +1,7 @@
 # AWS deployment: S3, ECR, IAM, EC2 and HTTPS
 
+Update on 26 October 2026: production configuration now fails closed for missing model bundles, SQLite, weak/shared access tokens and unsafe CORS. Read [production handover](06_PRODUCTION_HANDOVER.md) for tested backup/restore commands, optional ingestion/backup schedules and the account details still needed. Shared student accounts are not implemented by these configuration checks.
+
 Reviewed against official references on **17 October 2026**. These commands are prepared for you to run. No AWS resources were created by this documentation task. Use a standard commercial AWS account and `ap-south-1` unless you deliberately adapt all region-specific inputs.
 
 ## 1. Choose the demonstration mode

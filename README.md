@@ -22,7 +22,7 @@ make present
 
 ## Remaining work and complete deployment instructions
 
-Start with [the remaining-process guide](docs/remaining/README.md). It links the current progress report, all Git/DVC release commands, AWS provisioning/deployment commands, operations/assessment checks and a prioritized feature roadmap. The local MVP is implemented; hosted CI, S3/ECR publishing and EC2 execution still need operator setup and evidence.
+Start with [the remaining-process guide](docs/remaining/README.md) and [production handover](docs/remaining/06_PRODUCTION_HANDOVER.md). They include progress, Git/DVC/AWS commands, verified backup/restore, optional schedules and account requirements. The local MVP and hosted CI are verified; S3/ECR/EC2 execution still needs AWS access and configuration. Real shared-user identity remains a separate prerequisite before student rollout.
 
 ## Run locally
 

@@ -1,0 +1,10 @@
+[Unit]
+Description=Back up CareerFlowOps during a daily maintenance window
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+RandomizedDelaySec=5min
+Persistent=false
+
+[Install]
+WantedBy=timers.target

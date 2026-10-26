@@ -1,10 +1,12 @@
 # CareerFlowOps: remaining work and execution order
 
-Reviewed: **25 October 2026**. Repository: `Amitkumarracha/CareerFlowOps`.
+Reviewed: **26 October 2026**. Repository: `Amitkumarracha/CareerFlowOps`.
+
+Start with [the production handover](06_PRODUCTION_HANDOVER.md) for the latest local backup/restore evidence, tested operations commands, optional schedules and account inputs still needed for a live deployment.
 
 For the new repeatable terminal commands and automatic release path, start with [the presentation guide](../PRESENTATION.md). [Automatic EC2 deployment](../AUTOMATIC_DEPLOYMENT.md) is now implemented behind explicit repository configuration; AWS execution still requires your account/host setup.
 
-The local single-candidate MVP is implemented. The remaining assessment-critical work is publishing the repository, running hosted CI, moving DVC artifacts to S3, publishing images to ECR, deploying the matching release to EC2, and collecting evidence. Cloud configuration files alone do not prove a cloud deployment.
+The local single-candidate MVP, GitHub synchronization and hosted CI are verified. Remaining assessment-critical work includes moving DVC artifacts to S3, publishing images to ECR, deploying the matching release to EC2, and collecting cloud evidence. Cloud configuration files alone do not prove a cloud deployment.
 
 ## Read these files
 
@@ -15,6 +17,7 @@ The local single-candidate MVP is implemented. The remaining assessment-critical
 | [03_AWS_DEPLOYMENT.md](03_AWS_DEPLOYMENT.md) | AWS login, S3/ECR/IAM/OIDC, EC2 creation, Ubuntu installation, deployment, private demo and public HTTPS |
 | [04_OPERATIONS_AND_ASSESSMENT.md](04_OPERATIONS_AND_ASSESSMENT.md) | End-to-end smoke check, monitoring, backups, restore/rollback, troubleshooting, assessment checklist and shutdown |
 | [05_FEATURE_IMPROVEMENTS.md](05_FEATURE_IMPROVEMENTS.md) | Prioritized future features, technical changes, dependencies and acceptance criteria |
+| [06_PRODUCTION_HANDOVER.md](06_PRODUCTION_HANDOVER.md) | Latest operations implementation/evidence, schedules, production configuration and required account inputs |
 
 ## Follow this order
 

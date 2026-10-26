@@ -1,0 +1,56 @@
+rule_files: [alerts.yml]
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="careerflowops-api",instance="api:8000"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: CareerFlowOpsApiDown
+        exp_alerts:
+          - exp_labels: {job: careerflowops-api, instance: 'api:8000', severity: critical}
+            exp_annotations:
+              summary: API metrics have been unreachable for five minutes
+  - interval: 1m
+    input_series:
+      - series: 'up{job="careerflowops-api",instance="api:8000"}'
+        values: '1x20'
+      - series: 'careerflowops_http_requests_total{route="/api/jobs",status="200"}'
+        values: '0+100x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: CareerFlowOpsApiDown
+        exp_alerts: []
+      - eval_time: 15m
+        alertname: CareerFlowOpsServerErrors
+        exp_alerts: []
+  - interval: 1m
+    input_series:
+      - series: 'careerflowops_http_requests_total{route="/api/jobs",status="500"}'
+        values: '0+10x20'
+      - series: 'careerflowops_http_requests_total{route="/api/jobs",status="200"}'
+        values: '0+20x20'
+      - series: 'careerflowops_http_requests_total{route="/ready",status="503"}'
+        values: '0+1x20'
+      - series: 'careerflowops_ingestion_runs_total{status="partial"}'
+        values: '0 1+0x19'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: CareerFlowOpsServerErrors
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: API server errors exceed five percent with repeated failures
+      - eval_time: 15m
+        alertname: CareerFlowOpsReadinessFailure
+        exp_alerts:
+          - exp_labels: {severity: critical}
+            exp_annotations:
+              summary: API readiness is repeatedly failing; inspect database and model integrity
+      - eval_time: 15m
+        alertname: CareerFlowOpsIngestionFailure
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: A live ingestion run failed or completed partially; inspect Source health

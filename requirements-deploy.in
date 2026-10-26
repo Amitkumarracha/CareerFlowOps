@@ -1,2 +1,2 @@
-# Host-side model delivery only; no training stack is needed on EC2.
+# Host-side model delivery and operations; no training stack is needed on EC2.
 dvc[s3]==3.67.1

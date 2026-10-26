@@ -1,6 +1,8 @@
 # Overall progress, requirements and known gaps
 
-Reviewed: **25 October 2026**. This is an evidence-based status report, not a completion percentage. The historical implementation log remains in [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md). Repeatable commands are in [the terminal presentation guide](../PRESENTATION.md).
+Reviewed: **26 October 2026**. This is an evidence-based status report, not a completion percentage. The historical implementation log remains in [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md). Repeatable commands are in [the terminal presentation guide](../PRESENTATION.md).
+
+Latest operations verification: 85 backend/13 frontend tests passed; real private backup and isolated database restore passed; 1,064 postings normalized during live ingestion. Production configuration guards, tested alert rules and optional ingestion/backup timer units are implemented. AWS access, shared-user identity, enabled EC2 schedules, off-host backups and notification delivery remain pending. See [production handover](06_PRODUCTION_HANDOVER.md).
 
 ## Current result
 
@@ -11,7 +13,7 @@ Current runtime checks during this review:
 | Check | Observed result |
 | --- | --- |
 | API health and readiness | HTTP 200 at port 8000 |
-| Local jobs endpoint | 1,144 canonical records after the 25 October refresh; historical records remain until a future verified-expiry feature |
+| Local jobs endpoint | 1,148 canonical records after the 26 October refresh; historical records remain until a future verified-expiry feature |
 | Docker services | API, web, PostgreSQL, MLflow, Prometheus and Grafana running |
 | Current readiness mode | Verified bundle mode locally; still not proof of EC2 hosting |
 | Selected model artifact | TF-IDF, `b3e854956e87-574536b6` |
@@ -29,7 +31,7 @@ Do not delete project databases, volumes, artifacts or unrelated caches to free 
 | --- | --- | --- |
 | React portal | Overview, search, job details, recommendations, saved jobs, profile, resume, applications, TPO, experiments, source health, system guide, not-found view | Continue accessibility and real-user usability review |
 | Search | Keyword, location, company, source, work arrangement, employment, experience and posting-date filters; URL state and pagination | Recommendation retrieval still examines at most 1,000 recent active jobs |
-| ATS ingestion | Greenhouse, Lever and Ashby adapters, bounded retries, allowlisted boards and live/snapshot modes | Scheduled ingestion, expiry/revalidation and more employer boards |
+| ATS ingestion | Greenhouse, Lever and Ashby adapters, bounded retries, allowlisted boards, live/snapshot modes and optional systemd schedules | Enable/verify the EC2 schedule; expiry/revalidation and more employer boards |
 | Data quality | Raw payloads separate from normalized jobs, idempotent upserts, source occurrences and preserved apply URLs | Fuzzy matches are suggestions; no merge/reject review workflow |
 | Resume/profile | Text PDF extraction, known-skill normalization, editable profile, history/text review and owner-checked deletion | No OCR or broad entity-recognition model |
 | Ranking | TF-IDF, pretrained SentenceTransformer and hybrid; component scores and explanations | Human-validated larger benchmark; no claim of hiring probability |
@@ -40,7 +42,7 @@ Do not delete project databases, volumes, artifacts or unrelated caches to free 
 | Production serving | File/inference compatibility validation, prediction probe, fail-closed bundle inference, readiness identity | Must execute the EC2 deployment and verify the downloaded release there |
 | Containers | Clean API/web image builds, Compose, migrations, persistence and restart policies | Cloud images still need the configured ECR account |
 | CI/CD | Hosted checks/build passed; SHA-tagged builds, optional OIDC ECR publishing and configured SSM deployment | AWS execution remains unverified and disabled until roles/host exist |
-| Monitoring | Prometheus metrics, structured HTTP logs and provisioned Grafana dashboard | No alert notifications, automated SLO enforcement or ML drift pipeline |
+| Monitoring | Prometheus metrics, structured HTTP logs, Grafana dashboard and tested alert rules | Notification delivery, host/disk metrics, SLO enforcement and ML drift |
 | Access/privacy | Separate candidate/admin bearer tokens, private candidate endpoints and cache clearing on disconnect | Candidate token identifies one candidate; not a multi-user platform |
 
 ## Verification already performed

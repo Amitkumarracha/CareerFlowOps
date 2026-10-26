@@ -2,7 +2,19 @@ PYTHON := .venv/bin/python
 UV := .venv-tools/bin/uv
 DOCKER ?= docker
 DVC_REMOTE ?= storage
-.PHONY: setup ml-setup cloud-setup export-model dev test lint format db-migrate ingest train evaluate reproduce monitoring status present sync release serve-release
+.PHONY: setup ml-setup cloud-setup export-model dev test lint format db-migrate ingest train evaluate reproduce monitoring status present sync release serve-release production-check live-ingest backup restore-check
+
+production-check:
+	$(PYTHON) -m infra.scripts.operations check
+
+live-ingest:
+	$(PYTHON) -m infra.scripts.operations ingest
+
+backup:
+	$(PYTHON) -m infra.scripts.operations backup
+
+restore-check:
+	$(PYTHON) -m infra.scripts.operations restore-check --backup "$(BACKUP)"
 
 serve-release:
 	$(PYTHON) -m pipelines.export_model --validate ml/artifacts/production

@@ -81,6 +81,8 @@ def instrument(app: FastAPI) -> None:
             response = await call_next(request)
             status = response.status_code
             response.headers["X-Content-Type-Options"] = "nosniff"
+            if request.url.path.startswith("/api/"):
+                response.headers["Cache-Control"] = "no-store"
             return response
         finally:
             route = getattr(request.scope.get("route"), "path", "unmatched")

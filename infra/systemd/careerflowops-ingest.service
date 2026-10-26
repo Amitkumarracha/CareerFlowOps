@@ -1,0 +1,11 @@
+[Unit]
+Description=CareerFlowOps live ATS ingestion
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/CareerFlowOps
+Environment=DOCKER_HOST=unix:///var/run/docker.sock
+ExecStart=%h/CareerFlowOps/.venv-deploy/bin/python -m infra.scripts.operations ingest
+TimeoutStartSec=20min
+TimeoutStopSec=1min
+UMask=0077

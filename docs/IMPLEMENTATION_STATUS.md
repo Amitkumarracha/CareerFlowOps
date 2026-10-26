@@ -1,6 +1,8 @@
 # Implementation status
 
-Latest execution update: **25 October 2026** — GitHub synchronization, hosted checks/build, a new full DVC/MLflow run, clean local images and a repeatable terminal presentation are verified below. AWS resources/account configuration remain pending; see [PRESENTATION.md](PRESENTATION.md) and [AUTOMATIC_DEPLOYMENT.md](AUTOMATIC_DEPLOYMENT.md).
+Latest execution update: **26 October 2026** — production configuration guards, private API cache controls, operational commands, optional systemd schedules and tested Prometheus alerts added. A real maintenance backup and isolated database restore passed; live ingestion normalized 1,064 postings. 85 backend and 13 frontend tests, lint/type checks, frontend/Docker builds and monitoring rule tests passed. Schedules and notification delivery are not enabled. See [production handover](remaining/06_PRODUCTION_HANDOVER.md) for evidence, commands and external blockers.
+
+The 25 October GitHub synchronization, hosted checks/build, full DVC/MLflow run and terminal presentation remain verified below. AWS account/resources remain pending. Shared per-user identity remains unimplemented; these operations changes do not make the shared candidate token suitable for multiple students.
 
 For the current consolidated status and remaining execution order, see [remaining-process index](remaining/README.md) and [overall progress](remaining/01_OVERALL_PROGRESS.md), reviewed on 17 October 2026. The sections below retain chronological implementation evidence; older statements about absent repository access or browser QA are superseded by later updates.
 

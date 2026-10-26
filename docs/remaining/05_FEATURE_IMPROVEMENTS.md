@@ -2,6 +2,8 @@
 
 These are **planned improvements**, not implemented features. First finish the Git/DVC/AWS evidence stages in this directory. The existing project is a working single-candidate MVP; expanding it does not require replacing the stack or splitting it into microservices.
 
+Update on 26 October: [production handover](06_PRODUCTION_HANDOVER.md) records implemented backup/isolated-restore commands, optional ingestion/backup timer units, configuration guards and tested alert rules. These portions of milestones C/E now exist. EC2 schedule activation, verified source closure, encrypted off-host retention and delivered notifications are still pending; the detailed milestones below describe the complete target.
+
 ## Recommended order
 
 | Priority | Improvement | Why it matters | Completion evidence |
