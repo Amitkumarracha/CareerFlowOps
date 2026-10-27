@@ -1,6 +1,6 @@
 # CareerFlowOps: terminal presentation and automatic release
 
-This guide follows the two supplied diagrams and uses real artifacts and commands. Run from the repository root. Commands that need GitHub/AWS access fail if the required account configuration is missing; the project does not invent successful cloud evidence.
+This guide follows the two supplied diagrams and uses real artifacts and commands. Run from the repository root. Commands that need GitHub/AWS access fail if the required account configuration is missing; the project does not invent successful cloud evidence. For the timed evaluation demo, rubric mapping and likely viva questions, see the [demo and viva guide](VIVA_AND_DEMO_GUIDE.md).
 
 ## 1. Open the project and inspect its actual versions
 
@@ -96,7 +96,7 @@ That runs tests/lint/frontend build, DVC reproduction, selected-model validation
 The `main` push automatically runs CI and builds both images. ECR publishing runs only when `AWS_ROLE_ARN` is configured. Both images use the full pushed Git SHA and carry an OCI revision label.
 
 ```bash
-gh run list --repo Amitkumarracha/CareerFlowOps --workflow docker-publish.yml
+gh run list --repo Arjun-Reddy-I/CareerFlowOps --workflow docker-publish.yml
 git rev-parse HEAD
 git log -5 --oneline
 ```
@@ -118,6 +118,17 @@ The existing [AWS guide](remaining/03_AWS_DEPLOYMENT.md) provides account, S3/EC
 EC2 deployment runs `infra/aws/deploy.sh`: it checks image SHA against the checkout, pulls ECR images and the DVC production bundle, validates inference inside the published API image, applies migrations, starts the service with restart policies and compares the active bundle ID with the downloaded manifest.
 
 Subsequent deployments can be automated through SSM using [AUTOMATIC_DEPLOYMENT.md](AUTOMATIC_DEPLOYMENT.md). No SSH private key is stored in GitHub. The job runs only after both ECR images were published successfully, automatic deployment was explicitly configured and the requested commit is still the tip of main.
+
+### Live walkthrough of the deployed system
+
+This deployment exists and was verified on 27 October 2026; the evidence for every box of the diagram is in the [AWS deployment record](remaining/03_AWS_DEPLOYMENT.md#11-deployment-record-arjun-reddy-i-fork-27-october-2026). A suggested order that follows the diagram from top to bottom:
+
+1. **CI/CD pipeline builds the Docker image.** Open the successful run in GitHub Actions (`gh run list --repo Arjun-Reddy-I/CareerFlowOps --limit 3`) and show the jobs: checks, build, deploy.
+2. **Container registry stores the image.** `aws ecr describe-images --repository-name careerflowops-api --profile careerflow --region ap-south-1` lists the immutable tag equal to the Git SHA and its digest.
+3. **EC2 pulls the image and the model.** Show the deploy job log: ECR pull, DVC pull from S3, model validation inside the published image, readiness check against the manifest.
+4. **The API is running and kept alive.** `https://15-252-197-53.sslip.io/ready` shows the bundle ID and model version. Show the crash-recovery test from [operations section 4](remaining/04_OPERATIONS_AND_ASSESSMENT.md#4-monitoring-and-restart-verification).
+5. **Client request and prediction.** In the portal, enter the candidate token (see `infra/aws/demo_access.ps1 tokens`), open **For you**, and show the score components, explanation and the official apply link.
+6. **Tracking and monitoring.** Run `infra/aws/demo_access.ps1 tunnels`, then show MLflow (`http://localhost:5000`), Prometheus (`http://localhost:19090`) and Grafana (`http://localhost:13000`).
 
 ## 8. Repeat after a project change
 

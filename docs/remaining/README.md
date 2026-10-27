@@ -1,6 +1,6 @@
 # CareerFlowOps: remaining work and execution order
 
-Reviewed: **26 October 2026**. Repository: `Amitkumarracha/CareerFlowOps`.
+Reviewed: **26 October 2026**. Repository: `Arjun-Reddy-I/CareerFlowOps`.
 
 Start with [the production handover](06_PRODUCTION_HANDOVER.md) for the latest local backup/restore evidence, tested operations commands, optional schedules and account inputs still needed for a live deployment.
 

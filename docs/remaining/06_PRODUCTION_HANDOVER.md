@@ -1,6 +1,6 @@
 # Production handover and current blockers
 
-Verified locally on **26 October 2026**. This is an execution record and operator guide, not a claim that AWS is deployed. The current application supports a private single-candidate demonstration. A shared student/TPO service still needs real accounts, scoped roles and institution/cohort isolation.
+Verified locally on **26 October 2026**. This is an execution record and operator guide written before the AWS deployment; the deployment was completed and verified on 27 October 2026 (see [AWS deployment record](03_AWS_DEPLOYMENT.md#11-deployment-record-arjun-reddy-i-fork-27-october-2026)). The current application supports a private single-candidate demonstration. A shared student/TPO service still needs real accounts, scoped roles and institution/cohort isolation.
 
 ## What was completed
 

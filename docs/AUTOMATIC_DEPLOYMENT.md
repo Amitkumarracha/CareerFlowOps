@@ -56,7 +56,7 @@ Inspect/reuse the role rather than repeating creation if it already exists. Its 
 WORKSTATION — authenticated GitHub CLI:
 
 ```bash
-export GH_REPO=Amitkumarracha/CareerFlowOps
+export GH_REPO=Arjun-Reddy-I/CareerFlowOps
 gh secret set AWS_DEPLOY_ROLE_ARN --repo "$GH_REPO" --body "arn:aws:iam::$AWS_ACCOUNT_ID:role/CareerFlowOpsGitHubDeploy"
 gh variable set EC2_INSTANCE_ID --repo "$GH_REPO" --body "$EC2_INSTANCE_ID"
 gh variable set DVC_REMOTE_URL --repo "$GH_REPO" --body "s3://$MODEL_BUCKET/careerflowops"

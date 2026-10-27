@@ -2,7 +2,9 @@
 
 Reviewed: **26 October 2026**. This is an evidence-based status report, not a completion percentage. The historical implementation log remains in [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md). Repeatable commands are in [the terminal presentation guide](../PRESENTATION.md).
 
-Latest operations verification: 85 backend/13 frontend tests passed; real private backup and isolated database restore passed; 1,064 postings normalized during live ingestion. Production configuration guards, tested alert rules and optional ingestion/backup timer units are implemented. AWS access, shared-user identity, enabled EC2 schedules, off-host backups and notification delivery remain pending. See [production handover](06_PRODUCTION_HANDOVER.md).
+Latest operations verification: 85 backend/13 frontend tests passed; real private backup and isolated database restore passed; 1,064 postings normalized during live ingestion. Production configuration guards, tested alert rules and optional ingestion/backup timer units are implemented. Shared-user identity, enabled EC2 schedules, off-host backups and notification delivery remain pending. See [production handover](06_PRODUCTION_HANDOVER.md).
+
+**AWS update, 27 October 2026:** the release is deployed on EC2 in `ap-south-1` and verified against both supplied diagrams (ECR images, S3 DVC model, restart-policy recovery, an explained prediction over public HTTPS, Prometheus/Grafana and MLflow history). The evidence table, deviations from the runbook and teardown steps are in [AWS deployment record](03_AWS_DEPLOYMENT.md#11-deployment-record-arjun-reddy-i-fork-27-october-2026). Statements below that AWS is unconfigured describe the state on 26 October.
 
 ## Current result
 

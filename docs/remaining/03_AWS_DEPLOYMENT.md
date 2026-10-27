@@ -257,7 +257,7 @@ The EC2 AWS identity should be the attached `CareerFlowOpsEC2` role. Do not run 
 EC2 — obtain the full published SHA from workstation stage 7, then clone/check out that version:
 
 ```bash
-git clone https://github.com/Amitkumarracha/CareerFlowOps.git
+git clone https://github.com/Arjun-Reddy-I/CareerFlowOps.git
 cd CareerFlowOps
 export RELEASE_SHA='<full-40-character-published-git-sha>'
 git checkout "$RELEASE_SHA"
@@ -370,3 +370,73 @@ curl --fail http://127.0.0.1:3000/api/health
 ```
 
 Continue to [operations and assessment](04_OPERATIONS_AND_ASSESSMENT.md). Retain the deployed SHA, ECR digests, DVC bundle ID, successful hosted run and actual inference evidence. Runtime containers use restart policies; they do not yet provide automatic high availability, model retraining or database migration rollback.
+
+## 11. Deployment record: `Arjun-Reddy-I` fork, 27 October 2026
+
+This section records how the guide above was applied to the account `679583587697` in `ap-south-1`, and where the applied setup intentionally differs from it. Account-specific identifiers below are not secrets. Passwords, tokens and access keys are never recorded here.
+
+| Item | Value |
+| --- | --- |
+| Repository | `Arjun-Reddy-I/CareerFlowOps` (fork of `Amitkumarracha/CareerFlowOps`, remote `upstream`) |
+| Model/DVC bucket | `careerflowops-models-679583587697-ap-south-1`, prefix `careerflowops` (versioned, encrypted, public access blocked) |
+| ECR repositories | `careerflowops-api`, `careerflowops-web` (immutable tags, scan on push) |
+| IAM roles | `CareerFlowOpsGitHubPublish`, `CareerFlowOpsGitHubDeploy`, `CareerFlowOpsEC2` (plus instance profile and `AmazonSSMManagedInstanceCore`) |
+| EC2 | `i-03693d83404d56843`, `m7i-flex.large` (8 GiB), Ubuntu 24.04 x86-64, 40 GiB encrypted gp3, tag `Name=CareerFlowOps`, IMDSv2 required |
+| Address | Elastic IP `15.252.197.53`, served as `https://15-252-197-53.sslip.io` |
+
+Differences from the guide and the reason for each:
+
+1. **Instance type.** The account is on the AWS Free plan, which rejects non-eligible types (`t3.medium` and `t3.large` failed with `InstanceType not eligible for Free Tier`). `aws ec2 describe-instance-types --filters Name=free-tier-eligible,Values=true` lists the allowed types; `m7i-flex.large` keeps the guide's 8 GiB sizing.
+2. **No SSH.** The instance has no key pair and port 22 is closed. Host preparation and inspection use Systems Manager Run Command; the security group opens only 80 and 443.
+3. **HTTPS on an IP-derived name.** The API rejects non-HTTPS, non-loopback production CORS origins, so a plain `http://<ip>` demonstration fails at startup by design. Without owning a domain, `<ip-with-dashes>.sslip.io` resolves to the Elastic IP and lets Caddy obtain a certificate, which satisfies the guard. `PUBLIC_DOMAIN`, `CORS_ORIGINS` and the GitHub variable `VITE_API_BASE_URL` must all use this same origin, and the web image must be rebuilt (new commit) after changing it.
+4. **GitHub OIDC subject.** New GitHub accounts can use the immutable subject format, `repo:<owner>@<owner-id>/<repo>@<repo-id>:ref:refs/heads/main`, which does not match the template in `oidc-trust-policy.json`. Symptom: `Could not assume role with OIDC: Not authorized to perform sts:AssumeRoleWithWebIdentity`. Check it with `gh api repos/<owner>/<repo>/actions/oidc/customization/sub` and list both subject formats in the trust policy of the two GitHub roles.
+5. **Repository name.** `infra/aws/policies.py` and its test now render the trust policy for this fork.
+6. **MLflow history.** A new EC2 MLflow server starts empty. The training workstation's tracking store (`mlflow-data/`, one experiment, 12 finished runs, model versions 1 to 4) was copied once through the project S3 prefix, checksum-verified, extracted into the EC2 `mlflow-data/` directory and the temporary object deleted. The runs, metrics and registry alias on EC2 are the original measured records, not regenerated ones.
+7. **Actions on a fork.** Right after forking, `workflow_dispatch` runs worked but pushes to `main` created no run (the commit had no `github-actions` check suite). Setting the repository's Actions permission explicitly fixed it: `gh api -X PUT repos/<owner>/<repo>/actions/permissions -F enabled=true -f allowed_actions=all`. The cause was not investigated further; verify with `gh api "repos/<owner>/<repo>/actions/runs?event=push"`.
+8. **Restart test.** `docker kill` is treated by Docker as a manual stop and the container stays down, so the restart check uses a crash simulation instead ([operations guide, section 4](04_OPERATIONS_AND_ASSESSMENT.md#4-monitoring-and-restart-verification)).
+
+### Verification against the two supplied diagrams
+
+Executed on 27 October 2026 against the deployed host. Nothing below is estimated; values are copied from command output. Run `infra/aws/demo_access.ps1 status` to see the host.
+
+| Diagram box | Implementation | Result |
+| --- | --- | --- |
+| CI/CD pipeline builds Docker image | GitHub Actions workflow `CI, Docker publish and optional EC2 deployment` | [Run 40569780650](https://github.com/Arjun-Reddy-I/CareerFlowOps/actions/runs/40569780650), started by a push to `main` (commit `380800d4f6982634fe3f1be05e7ba796e55eaa4c`): backend, frontend and monitoring checks, image build, ECR publish and EC2 deploy all succeeded. Every later push to `main` repeats this automatically |
+| Container registry stores image | ECR, immutable SHA tags | `careerflowops-api:380800d4…` digest `sha256:ad8f43fb328c79b5cd745d01f9ec37f7501fa93744ace964207286a100c0fcbb`; `careerflowops-web:380800d4…` digest `sha256:cacc3e35bf5a860ce8972442a2ffd36146cf41ea0d75498d542a57915e312542` |
+| Pull image from registry | `docker compose pull` with the instance role, no stored AWS keys | API, web and MLflow containers run the `380800d4…` tags, and the host checkout is at the same commit |
+| Pull model from DVC remote | `dvc pull -r production` from S3, validated inside the published API image | `dvc status -c -r production`: cache and remote in sync, 21 objects (92,630,923 bytes). `/ready` reports bundle `ded4d86e980bff8216b4629df8d2c8106888d9fab4bd78c69c6c9f52058d73e2`, model `b3e854956e87-574536b6`, algorithm `tfidf` |
+| Running API service kept alive by restart policy | `unless-stopped` on api, web, postgres, mlflow and edge; Docker enabled at boot | Server process killed inside the container: Docker restarted it without manual action, restart count 1, `/ready` answered again after about 4 seconds, also through HTTPS |
+| Client sends request, gets prediction | React portal and `GET /api/jobs/recommended` over HTTPS | Without a token: 401. With the demo candidate token: 5 ranked jobs with `model_version` equal to `/ready`, `fallback_reason` null, an explanation list and the official apply URL. Same result through loopback and the public URL |
+| Raw data versioned via DVC remote | S3 DVC remote under `careerflowops/` | Bucket versioned and encrypted, public access blocked |
+| Experiments, multiple runs, tracked | MLflow experiment `careerflowops-ranking` | 12 finished runs, including the `tfidf`, `sentence_transformer` and `hybrid` rankers |
+| Best model selected, model registry | Registered model `careerflowops-ranker`, DVC production bundle | Versions 1 to 4, alias `production` points to version 4 (run `9023340c622d`) |
+| Monitoring | Prometheus and Grafana on the host, loopback only | Scrape target `careerflowops-api` is up, 4 alert rules loaded, request, inference and ingestion metrics present, Grafana health `ok` |
+
+Saved MLflow metrics for the three rankers (from the run records, benchmark of six fictional queries with agent-authored illustrative labels, not human-validated):
+
+| Ranker | Validation MRR | Validation nDCG@5 | Test MRR | Test nDCG@5 | Test latency (ms) |
+| --- | --- | --- | --- | --- | --- |
+| `tfidf` | 1.0 | 1.0 | 1.0 | 1.0 | 26.94 |
+| `sentence_transformer` | 1.0 | 1.0 | 1.0 | 1.0 | 30.88 |
+| `hybrid` | 1.0 | 1.0 | 1.0 | 0.7426 | 29.00 |
+
+The ranker ties on validation and TF-IDF is selected by the documented deterministic tie-break. Do not present these as a claim of production ranking accuracy.
+
+Live ingestion on the host (public ATS endpoints) fetched and normalized 1,052 postings: 714 Greenhouse, 306 Lever and 32 Ashby, with 7 duplicates and no source errors. The demonstration candidate is a clearly fictional profile (skills only, no resume).
+
+Security posture observed from outside AWS: only ports 80 and 443 are open (port 80 redirects to HTTPS, certificate issued by Let's Encrypt), PostgreSQL, API, web, MLflow, Prometheus and Grafana listen on loopback only, CORS allows only the site's own origin (a foreign origin is refused), `/api/` responses carry `Cache-Control: no-store`, and the deployed JavaScript contains the HTTPS API origin and no `localhost` address.
+
+### Demo access (Windows, no SSH)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File infra\aws\demo_access.ps1 status    # instance, Systems Manager state, public URL
+powershell -ExecutionPolicy Bypass -File infra\aws\demo_access.ps1 tokens    # candidate token, admin token, Grafana password: this console only
+winget install Amazon.SessionManagerPlugin                                   # once, then reopen the terminal
+powershell -ExecutionPolicy Bypass -File infra\aws\demo_access.ps1 tunnels   # Grafana :13000, Prometheus :19090, MLflow :5000
+```
+
+Open the portal at the public URL and paste the candidate token into Workspace access (the admin token unlocks the TPO and source-health pages). Grafana user is `admin`. MLflow accepts only `localhost:5000` as its host name, so keep local port 5000 free. The host `.env` holds the real secrets; they are generated on the host and are never in Git. Systems Manager keeps command output for 30 days, so regenerate the secrets or tear down after the assessment.
+
+### Teardown after the assessment
+
+This stops all charges. Keep the bucket and images until you no longer need them: terminate the instance, release the Elastic IP, delete the `careerflowops-ec2` security group, delete both ECR repositories, empty and delete the versioned S3 bucket (remove all object versions), then delete the three roles, the instance profile and the GitHub OIDC provider. Finally delete the `careerflowops-deployer` IAM user's access key. Verify in the Billing console that nothing remains.

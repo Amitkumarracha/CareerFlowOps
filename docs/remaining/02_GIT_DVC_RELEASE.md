@@ -70,7 +70,7 @@ git remote -v
 Origin is already configured. Only if it is missing:
 
 ```bash
-git remote add origin https://github.com/Amitkumarracha/CareerFlowOps.git
+git remote add origin https://github.com/Arjun-Reddy-I/CareerFlowOps.git
 ```
 
 Inspect remote state before publishing:
@@ -216,7 +216,7 @@ WORKSTATION — the roles and ECR repositories must already exist. Choose the br
 - Public HTTPS: `https://<your-domain>` and use the Caddy edge configuration.
 
 ```bash
-export GH_REPO=Amitkumarracha/CareerFlowOps
+export GH_REPO=Arjun-Reddy-I/CareerFlowOps
 export AWS_REGION=ap-south-1
 export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 export BROWSER_API_ORIGIN=http://localhost:18000

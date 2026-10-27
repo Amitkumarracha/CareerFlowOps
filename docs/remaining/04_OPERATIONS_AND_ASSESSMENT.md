@@ -140,13 +140,17 @@ Inspect actual restart policies and images without dumping environment variables
 docker inspect --format '{{.Name}} {{.Config.Image}} {{.HostConfig.RestartPolicy.Name}}' "$(pc ps -q api)" "$(pc ps -q web)" "$(pc ps -q postgres)"
 ```
 
-During an agreed maintenance/demo window, test API process recovery. This briefly interrupts API requests:
+During an agreed maintenance/demo window, test API crash recovery. This briefly interrupts API requests. Do **not** use `docker kill` for this test: Docker treats a user-issued kill as a manual stop, so the container stays down (observed on Docker 29.9.2: state `Exited (137)`, restart count 0). Simulate a crash instead by killing the server process inside the container, so the container's main process exits unexpectedly:
 
 ```bash
-docker kill --signal=KILL "$(pc ps -q api)"
-curl --fail --retry 15 --retry-all-errors --retry-delay 2 http://127.0.0.1:8000/ready
+cid="$(pc ps -q api)"
+docker exec "$cid" python -c "import glob, os; [os.kill(int(p.split('/')[2]), 9) for p in glob.glob('/proc/[0-9]*/cmdline') if b'/usr/local/bin/uvicorn' in open(p, 'rb').read() and int(p.split('/')[2]) != os.getpid()]"
+curl --fail --retry 30 --retry-all-errors --retry-delay 2 http://127.0.0.1:8000/ready
+docker inspect --format 'restarts={{.RestartCount}} started={{.State.StartedAt}}' "$cid"
 pc ps
 ```
+
+Expected: `/ready` answers again without any manual start, `restarts` is at least 1 and `started` is newer. If an API container was stopped manually (for example by `docker kill`), bring it back with `pc up -d --no-build --wait api`.
 
 `unless-stopped` restarts an exited container; it does not automatically restart a process that stays alive but unhealthy. A manual `docker compose stop` is intentionally respected. The [Docker restart-policy reference](https://docs.docker.com/engine/containers/start-containers-automatically/) describes these distinctions. A full EC2 reboot test is optional and disruptive; maintain backups, reconnect, recheck IP/DNS and verify readiness afterwards.
 
@@ -244,7 +248,9 @@ After success, persist the image references using the `.env` update block in AWS
 | Symptom | Check and resolution |
 | --- | --- |
 | Git push asks for Username or fails | `gh auth status`, `gh auth setup-git`, check repository write access; do not put tokens in URLs |
-| No Actions run | Confirm `main` push, Actions enabled and workflow present on GitHub; inspect `gh run list` |
+| No Actions run | Confirm `main` push, Actions enabled and workflow present on GitHub; inspect `gh run list`. On a fresh fork, if pushes create no run while manual dispatch works, set the Actions permission explicitly (see [AWS deployment record](03_AWS_DEPLOYMENT.md#11-deployment-record-arjun-reddy-i-fork-27-october-2026), item 7) |
+| `Could not assume role with OIDC` | The token subject must match the role trust. Check `gh api repos/<owner>/<repo>/actions/oidc/customization/sub`; new repositories can use the immutable `owner@id/repo@id` format |
+| API container restarts, log says `Production CORS origins must be HTTPS` | Production rejects plain HTTP origins. Use an HTTPS origin in `CORS_ORIGINS`, `PUBLIC_DOMAIN` and the `VITE_API_BASE_URL` variable, then publish a new commit |
 | Green build but no ECR images | Check OIDC role secret, role trust, repository variables and whether publish steps were skipped |
 | ECR tag already exists | Immutable tags are working; review configuration and publish a new commit SHA |
 | AWS AccessDenied | `aws sts get-caller-identity`; identify provisioning/training/publish/EC2 role; grant only its needed actions |
