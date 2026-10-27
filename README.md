@@ -1,6 +1,6 @@
 # CareerFlowOps
 
-[![CI and Docker build](https://github.com/Amitkumarracha/CareerFlowOps/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Amitkumarracha/CareerFlowOps/actions/workflows/docker-publish.yml)
+[![CI and Docker build](https://github.com/Arjun-Reddy-I/CareerFlowOps/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Arjun-Reddy-I/CareerFlowOps/actions/workflows/docker-publish.yml)
 
 **Discover earlier. Match smarter. Apply better.**
 
