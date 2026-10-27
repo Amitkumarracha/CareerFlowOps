@@ -370,3 +370,26 @@ curl --fail http://127.0.0.1:3000/api/health
 ```
 
 Continue to [operations and assessment](04_OPERATIONS_AND_ASSESSMENT.md). Retain the deployed SHA, ECR digests, DVC bundle ID, successful hosted run and actual inference evidence. Runtime containers use restart policies; they do not yet provide automatic high availability, model retraining or database migration rollback.
+
+## 11. Deployment record: `Arjun-Reddy-I` fork, 27 October 2026
+
+This section records how the guide above was applied to the account `679583587697` in `ap-south-1`, and where the applied setup intentionally differs from it. Account-specific identifiers below are not secrets. Passwords, tokens and access keys are never recorded here.
+
+| Item | Value |
+| --- | --- |
+| Repository | `Arjun-Reddy-I/CareerFlowOps` (fork of `Amitkumarracha/CareerFlowOps`, remote `upstream`) |
+| Model/DVC bucket | `careerflowops-models-679583587697-ap-south-1`, prefix `careerflowops` (versioned, encrypted, public access blocked) |
+| ECR repositories | `careerflowops-api`, `careerflowops-web` (immutable tags, scan on push) |
+| IAM roles | `CareerFlowOpsGitHubPublish`, `CareerFlowOpsGitHubDeploy`, `CareerFlowOpsEC2` (plus instance profile and `AmazonSSMManagedInstanceCore`) |
+| EC2 | `i-03693d83404d56843`, `m7i-flex.large` (8 GiB), Ubuntu 24.04 x86-64, 40 GiB encrypted gp3, tag `Name=CareerFlowOps`, IMDSv2 required |
+| Address | Elastic IP `15.252.197.53`, served as `https://15-252-197-53.sslip.io` |
+
+Differences from the guide and the reason for each:
+
+1. **Instance type.** The account is on the AWS Free plan, which rejects non-eligible types (`t3.medium` and `t3.large` failed with `InstanceType not eligible for Free Tier`). `aws ec2 describe-instance-types --filters Name=free-tier-eligible,Values=true` lists the allowed types; `m7i-flex.large` keeps the guide's 8 GiB sizing.
+2. **No SSH.** The instance has no key pair and port 22 is closed. Host preparation and inspection use Systems Manager Run Command; the security group opens only 80 and 443.
+3. **HTTPS on an IP-derived name.** The API rejects non-HTTPS, non-loopback production CORS origins, so a plain `http://<ip>` demonstration fails at startup by design. Without owning a domain, `<ip-with-dashes>.sslip.io` resolves to the Elastic IP and lets Caddy obtain a certificate, which satisfies the guard. `PUBLIC_DOMAIN`, `CORS_ORIGINS` and the GitHub variable `VITE_API_BASE_URL` must all use this same origin, and the web image must be rebuilt (new commit) after changing it.
+4. **GitHub OIDC subject.** New GitHub accounts can use the immutable subject format, `repo:<owner>@<owner-id>/<repo>@<repo-id>:ref:refs/heads/main`, which does not match the template in `oidc-trust-policy.json`. Symptom: `Could not assume role with OIDC: Not authorized to perform sts:AssumeRoleWithWebIdentity`. Check it with `gh api repos/<owner>/<repo>/actions/oidc/customization/sub` and list both subject formats in the trust policy of the two GitHub roles.
+5. **Repository name.** `infra/aws/policies.py` and its test now render the trust policy for this fork.
+
+Teardown after the assessment (stops all charges; keep the bucket and images until you no longer need them): terminate the instance, release the Elastic IP, delete the `careerflowops-ec2` security group, delete both ECR repositories, empty and delete the versioned S3 bucket, then delete the three roles, the instance profile and the GitHub OIDC provider.
