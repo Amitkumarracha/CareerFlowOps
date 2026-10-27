@@ -248,7 +248,9 @@ After success, persist the image references using the `.env` update block in AWS
 | Symptom | Check and resolution |
 | --- | --- |
 | Git push asks for Username or fails | `gh auth status`, `gh auth setup-git`, check repository write access; do not put tokens in URLs |
-| No Actions run | Confirm `main` push, Actions enabled and workflow present on GitHub; inspect `gh run list` |
+| No Actions run | Confirm `main` push, Actions enabled and workflow present on GitHub; inspect `gh run list`. On a fresh fork, if pushes create no run while manual dispatch works, set the Actions permission explicitly (see [AWS deployment record](03_AWS_DEPLOYMENT.md#11-deployment-record-arjun-reddy-i-fork-27-october-2026), item 7) |
+| `Could not assume role with OIDC` | The token subject must match the role trust. Check `gh api repos/<owner>/<repo>/actions/oidc/customization/sub`; new repositories can use the immutable `owner@id/repo@id` format |
+| API container restarts, log says `Production CORS origins must be HTTPS` | Production rejects plain HTTP origins. Use an HTTPS origin in `CORS_ORIGINS`, `PUBLIC_DOMAIN` and the `VITE_API_BASE_URL` variable, then publish a new commit |
 | Green build but no ECR images | Check OIDC role secret, role trust, repository variables and whether publish steps were skipped |
 | ECR tag already exists | Immutable tags are working; review configuration and publish a new commit SHA |
 | AWS AccessDenied | `aws sts get-caller-identity`; identify provisioning/training/publish/EC2 role; grant only its needed actions |
