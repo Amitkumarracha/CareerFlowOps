@@ -37,7 +37,7 @@ def test_iam_documents_restrict_repo_storage_and_ec2_permissions(tmp_path) -> No
         trust["Statement"][0]["Condition"]["StringEquals"][
             "token.actions.githubusercontent.com:sub"
         ]
-        == "repo:Amitkumarracha/CareerFlowOps:ref:refs/heads/main"
+        == "repo:Arjun-Reddy-I/CareerFlowOps:ref:refs/heads/main"
     )
     policy = json.loads((tmp_path / "ec2-pull.json").read_text())
     assert "s3:PutObject" not in json.dumps(policy)

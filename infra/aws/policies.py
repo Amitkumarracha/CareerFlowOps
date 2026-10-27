@@ -23,7 +23,7 @@ def render(account: str, region: str, bucket: str, output: Path) -> None:
             (root / source)
             .read_text()
             .replace("ACCOUNT_ID", account)
-            .replace("OWNER/REPOSITORY", "Amitkumarracha/CareerFlowOps")
+            .replace("OWNER/REPOSITORY", "Arjun-Reddy-I/CareerFlowOps")
             .replace("ap-south-1", region)
         )
         (output / target).write_text(content)
